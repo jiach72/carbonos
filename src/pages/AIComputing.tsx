@@ -1,4 +1,4 @@
-import { Server, Network, Cpu, Zap, Shield, Clock, BarChart3, Wrench, ChevronRight } from 'lucide-react'
+import { Server, Network, Cpu, Zap, Clock, BarChart3, Wrench, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 // 算力中心组网特性
@@ -103,7 +103,7 @@ export default function AIComputing() {
                                 针对千卡/万卡集群进行拓扑优化，消除网络拥塞，确保GPU算力利用率最大化。
                             </p>
                             <div className="space-y-4">
-                                {networkingFeatures.map((feature, index) => (
+                                {networkingFeatures.map((feature) => (
                                     <div
                                         key={feature.title}
                                         className="glass-card p-4 flex items-start gap-4"
@@ -188,7 +188,7 @@ export default function AIComputing() {
                                 7x24h监控、故障自愈、资产代维，保障算力训练任务永不断电。
                             </p>
                             <div className="space-y-4">
-                                {aiOpsFeatures.map((feature, index) => (
+                                {aiOpsFeatures.map((feature) => (
                                     <div
                                         key={feature.title}
                                         className="glass-card p-4 flex items-start gap-4"

@@ -1,4 +1,4 @@
-import { Building2, Sun, Network, Battery, BarChart3, Leaf, Globe, TrendingDown, ChevronRight, CheckCircle } from 'lucide-react'
+import { Building2, Sun, Network, Battery, BarChart3, Leaf, Globe, TrendingDown, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 // 源网荷储模块

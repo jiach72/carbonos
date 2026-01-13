@@ -1,4 +1,4 @@
-import { Database, Globe, Link as LinkIcon, Shield, FileText, Coins, BarChart3, ChevronRight, Lock, Eye } from 'lucide-react'
+import { Database, Globe, Shield, FileText, Coins, BarChart3, ChevronRight, Lock, Eye } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 // RDA特性
@@ -93,7 +93,7 @@ export default function DigitalAssets() {
                                 将电站与算力中心的运行数据确权为可信数据资产。
                             </p>
                             <div className="space-y-4">
-                                {rdaFeatures.map((feature, index) => (
+                                {rdaFeatures.map((feature) => (
                                     <div
                                         key={feature.title}
                                         className="glass-card p-4 flex items-start gap-4"

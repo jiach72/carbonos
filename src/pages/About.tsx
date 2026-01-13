@@ -1,4 +1,4 @@
-import { Users, Award, Calendar, GraduationCap, Building, Globe, ChevronRight, Linkedin, Mail } from 'lucide-react'
+import { Users, GraduationCap, Building, Globe, ChevronRight, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 // 核心团队数据
@@ -108,7 +108,7 @@ export default function About() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {teamMembers.map((member, index) => (
+                        {teamMembers.map((member) => (
                             <div
                                 key={member.name}
                                 className="glass-card p-6 group hover:border-primary-500/50 transition-all duration-300"
