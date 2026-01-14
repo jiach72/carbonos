@@ -145,8 +145,10 @@ export default function About() {
                     </div>
 
                     <div className="relative">
-                        {/* 时间线 */}
+                        {/* 桌面端时间线（居中） */}
                         <div className="absolute left-1/2 -translate-x-px top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-500 via-secondary-300 to-accent-300 hidden md:block" />
+                        {/* 移动端时间线（左侧） */}
+                        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-500 via-secondary-300 to-accent-300 md:hidden" />
 
                         <div className="space-y-8">
                             {timeline.map((event, index) => (
@@ -155,8 +157,11 @@ export default function About() {
                                     className={`relative flex items-center gap-8 ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
                                         }`}
                                 >
+                                    {/* 移动端节点 */}
+                                    <div className="absolute left-4 -translate-x-1/2 w-3 h-3 rounded-full bg-primary-500 border-2 border-dark-500 md:hidden" />
+
                                     {/* 内容卡片 */}
-                                    <div className={`flex-1 ${index % 2 === 0 ? 'md:text-right' : ''}`}>
+                                    <div className={`flex-1 pl-8 md:pl-0 ${index % 2 === 0 ? 'md:text-right' : ''}`}>
                                         <div className="glass-card p-6 inline-block">
                                             <div className="text-2xl font-bold text-gradient mb-2">{event.year}</div>
                                             <h4 className="text-lg font-semibold text-white mb-2">{event.title}</h4>
@@ -164,7 +169,7 @@ export default function About() {
                                         </div>
                                     </div>
 
-                                    {/* 中间节点 */}
+                                    {/* 桌面端中间节点 */}
                                     <div className="hidden md:flex w-4 h-4 rounded-full bg-primary-500 border-4 border-dark-500 absolute left-1/2 -translate-x-1/2" />
 
                                     {/* 占位 */}

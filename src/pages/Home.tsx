@@ -83,7 +83,7 @@ export default function Home() {
                         </h1>
 
                         {/* 副标题 */}
-                        <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                        <p className="text-lg sm:text-xl text-gray-400 mb-10 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: '0.1s' }}>
                             云-边-端全栈自研，打造"能源 + 算力 + 金融"的数字化闭环
                         </p>
 

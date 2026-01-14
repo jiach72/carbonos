@@ -9,6 +9,7 @@ const navLinks = [
     { name: '零碳园区', path: '/zero-carbon' },
     { name: 'AI算力', path: '/ai-computing' },
     { name: '数字资产', path: '/digital-assets' },
+    { name: '行业动态', path: '/news' },
     { name: '关于我们', path: '/about' },
 ]
 

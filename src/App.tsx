@@ -8,6 +8,7 @@ import EnergySolutions from './pages/EnergySolutions'
 import ZeroCarbonPark from './pages/ZeroCarbonPark'
 import AIComputing from './pages/AIComputing'
 import DigitalAssets from './pages/DigitalAssets'
+import News from './pages/News'
 import About from './pages/About'
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
                         <Route path="/zero-carbon" element={<ZeroCarbonPark />} />
                         <Route path="/ai-computing" element={<AIComputing />} />
                         <Route path="/digital-assets" element={<DigitalAssets />} />
+                        <Route path="/news" element={<News />} />
                         <Route path="/about" element={<About />} />
                     </Routes>
                 </main>
