@@ -50,15 +50,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Copy docker-compose.prod.yml to server
+      - name: Copy configuration to server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "docker-compose.prod.yml"
+          source: "docker-compose.prod.yml,nginx/nginx.conf"
           target: "/app/carbonos/"
+          strip_components: 0
 
       - name: Execute deployment commands
         uses: appleboy/ssh-action@master
@@ -68,8 +69,20 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
-            mkdir -p /app/carbonos
+            mkdir -p /app/carbonos/nginx
             cd /app/carbonos
+            
+            # 移动文件(确保 nginx.conf 在根目录以便 docker-compose 引用)
+            # 如果 scp 传到了 /app/carbonos/nginx/nginx.conf，则保留
+            # 如果传到了 /app/carbonos/nginx.conf，则不需要移动
+            # 我们这里统一部署逻辑：
+            # scp 可能会保留 nginx/nginx.conf 目录结构(取决于 strip_components).
+            # 我们在 docker-compose 中使用的是 ./nginx.conf，所以我们调整文件位置
+            
+            if [ -f "nginx/nginx.conf" ]; then
+                mv nginx/nginx.conf ./nginx.conf
+                rm -rf nginx
+            fi
             
             # 登录 GHCR 以拉取私有/公开镜像
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin

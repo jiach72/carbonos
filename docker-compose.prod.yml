@@ -1,20 +1,27 @@
 version: '3.8'
 
 services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: always
+    networks:
+      - carbonos-network
+
   frontend:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/carbonos-frontend:latest
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=https://api.scdc.cloud
     restart: always
     networks:
       - carbonos-network
 
   backend:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/carbonos-backend:latest
-    ports:
-      - "8000:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://carbonos:carbonos@postgres:5432/carbonos
       - REDIS_URL=redis://redis:6379/0

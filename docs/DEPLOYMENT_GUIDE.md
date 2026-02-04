@@ -246,58 +246,24 @@ jobs:
 
 ## 7. 反向代理配置 (Nginx)
 
-为了通过域名 (`80/443` 端口) 访问到 Docker 容器中的服务 (`3000/8000` 端口)，建议在服务器宿主机上配置 Nginx。
+本项目使用 Docker 容器化部署 Nginx，因此**无需配置服务器宿主机 Nginx**。
 
-### 7.1 安装 Nginx
+`nginx/nginx.conf` 配置文件已包含在代码库中，并会在部署时自动复制到服务器。
 
-```bash
-apt-get install -y nginx certbot python3-certbot-nginx
-```
+### 7.1 DNS 配置（必要）
 
-### 7.2 配置 Nginx
+请确保 Cloudflare 的 SSL/TLS 模式设置为 **Flexible**（灵活性）。
+这是因为 Nginx 容器配置监听的是 80 端口，Cloudflare 负责处理 HTTPS 并回源到 HTTP 端口。
 
-创建配置文件 `/etc/nginx/sites-available/scdc.cloud`：
+如果 Cloudflare 设置为 Full/Strict，会导致重定向循环或 522 错误。
 
-```nginx
-# 前端 (scdc.cloud & www.scdc.cloud)
-server {
-    listen 80;
-    server_name scdc.cloud www.scdc.cloud;
+### 7.2 端口说明
 
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
+- **80**: Nginx 监听端口（映射到宿主机 80）
+- **3000**: 前端容器内部端口（不暴露到宿主机）
+- **8000**: 后端容器内部端口（不暴露到宿主机）
 
-# 后端 API (api.scdc.cloud)
-server {
-    listen 80;
-    server_name api.scdc.cloud;
-
-    location / {
-        proxy_pass http://localhost:8000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-启用配置：
-
-```bash
-ln -s /etc/nginx/sites-available/scdc.cloud /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default  # 移除默认配置（可选）
-nginx -t
-systemctl reload nginx
-```
+无需在服务器上手动运行 `apt-get install nginx`。
 
 ### 7.3 配置 HTTPS (Cloudflare 模式)
 
