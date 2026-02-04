@@ -30,16 +30,16 @@ jobs:
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./carbonos
+          file: ./carbonos/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
 
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: ./carbonos/backend
+          file: ./carbonos/backend/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
 
