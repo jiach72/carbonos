@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import sys
+import uuid
+import random
 from datetime import datetime, timedelta
 
 # 添加模块搜索路径
@@ -12,7 +14,7 @@ from app.core.security import get_password_hash
 from app.models.user import User, UserRole
 from app.models.tenant import Tenant, TenantPlan
 from app.models.organization import Organization, OrganizationType
-from app.models.carbon import CarbonEmission, EmissionSourceType, EmissionScope
+from app.models.carbon import CarbonEmission, EmissionScope, EmissionFactor
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -31,7 +33,7 @@ async def seed_data():
                     email="admin@scdc.cloud",
                     password_hash=get_password_hash("123456"),
                     full_name="Super Admin",
-                    role=UserRole.OD_ADMIN, # 平台超管
+                    role=UserRole.OD_ADMIN,
                     is_active=True
                 )
                 db.add(admin)
@@ -85,36 +87,79 @@ async def seed_data():
                 db.add(test_user)
                 logger.info("Created Test Tenant User: user@abc.com")
                 
-                # D. 模拟排放数据 (过去30天)
-                import random
+                # D. 创建排放因子 (必须先有因子才能创建排放记录)
+                logger.info("Creating Emission Factors...")
+                factors = [
+                    {
+                        "name": "华东区域电网平均排放因子",
+                        "category": "电力",
+                        "energy_type": "electricity",
+                        "scope": EmissionScope.SCOPE_2,
+                        "factor_value": 0.5810,
+                        "unit": "kgCO2e/kWh"
+                    },
+                    {
+                        "name": "工业天然气",
+                        "category": "天然气",
+                        "energy_type": "natural_gas",
+                        "scope": EmissionScope.SCOPE_1,
+                        "factor_value": 2.16,
+                        "unit": "kgCO2e/m3"
+                    },
+                    {
+                        "name": "0号柴油",
+                        "category": "燃油",
+                        "energy_type": "diesel",
+                        "scope": EmissionScope.SCOPE_1,
+                        "factor_value": 2.6,
+                        "unit": "kgCO2e/L"
+                    }
+                ]
+                
+                created_factors = {}
+                for f in factors:
+                    ef = EmissionFactor(
+                        name=f["name"],
+                        category=f["category"],
+                        energy_type=f["energy_type"],
+                        scope=f["scope"],
+                        factor_value=f["factor_value"],
+                        unit=f["unit"],
+                        source="CN-Grid-2022",
+                        year=2023,
+                        is_default=True
+                    )
+                    db.add(ef)
+                    await db.flush() # get id
+                    created_factors[f["energy_type"]] = ef
+
+                # E. 模拟排放数据 (过去30天)
                 logger.info("Generating mock emission data...")
                 
+                # energy_type, name mapping
                 sources = [
-                    (EmissionSourceType.ELECTRICITY, EmissionScope.SCOPE_2, "市电购入"),
-                    (EmissionSourceType.NATURAL_GAS, EmissionScope.SCOPE_1, "锅炉燃气"),
-                    (EmissionSourceType.DIESEL, EmissionScope.SCOPE_1, "备用发电机"),
-                    (EmissionSourceType.GASOLINE, EmissionScope.SCOPE_1, "自有车辆"),
+                    ("electricity", "市电购入"),
+                    ("natural_gas", "锅炉燃气"),
+                    ("diesel", "备用发电机"),
                 ]
                 
                 for i in range(30):
                     date = datetime.utcnow() - timedelta(days=i)
-                    # 为工厂生成数据
-                    for source_type, scope, name in sources:
+                    
+                    for energy_type, name in sources:
                         amount = random.uniform(100, 1000)
-                        factor = random.uniform(0.5, 2.0)
+                        factor_obj = created_factors[energy_type]
                         
                         emission = CarbonEmission(
                             organization_id=org_factory.id,
                             tenant_id=tenant.id,
-                            source_type=source_type,
-                            scope=scope,
-                            name=f"{name} - {date.strftime('%Y-%m-%d')}",
-                            amount=amount,
-                            unit="kWh" if source_type == EmissionSourceType.ELECTRICITY else "L/m3",
-                            emission_factor=factor,
-                            total_co2e=amount * factor,
-                            occurrence_date=date,
-                            recorder_id=test_user.id
+                            emission_factor_id=factor_obj.id, # 关联到因子ID
+                            scope=factor_obj.scope,
+                            activity_data=amount,
+                            activity_unit=factor_obj.unit.split("/")[1], # e.g. kWh
+                            emission_amount=(amount * factor_obj.factor_value) / 1000.0, # tCO2e
+                            calculation_date=date,
+                            remarks=f"{name} - {date.strftime('%Y-%m-%d')}"
                         )
                         db.add(emission)
                 
