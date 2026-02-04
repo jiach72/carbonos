@@ -123,6 +123,8 @@ volumes:
 - **主机路径**: `/lhcos-data` (示例中使用的挂载点)
 - **容器路径**: `/app/uploads` (后端应用配置的文件存储路径)
 
+> **注意**: 如果您使用非 root 用户部署，建议将应用代码部署到用户主目录下（如 `~/apps/carbonos`），并将数据卷挂载到您有权限的路径。
+
 确保服务器上 `/lhcos-data` 目录已正确挂载且有读写权限。
 
 ## 4. 创建 GitHub Actions Workflow
