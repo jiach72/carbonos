@@ -33,7 +33,7 @@ async def seed_data():
                     email="admin@scdc.cloud",
                     password_hash=get_password_hash("123456"),
                     full_name="Super Admin",
-                    role=UserRole.OD_ADMIN,
+                    role=UserRole.ADMIN,  # 使用 ADMIN 角色（无 OD_ADMIN）
                     is_active=True
                 )
                 db.add(admin)
