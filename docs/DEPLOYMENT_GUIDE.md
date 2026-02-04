@@ -257,6 +257,8 @@ jobs:
 
 如果 Cloudflare 设置为 Full/Strict，会导致重定向循环或 522 错误。
 
+> **推荐设置**: 在 Cloudflare "Edge Certificates" 页面，开启 **Always Use HTTPS** 以强制所有流量通过 HTTPS 访问。
+
 ### 7.2 端口说明
 
 - **80**: Nginx 监听端口（映射到宿主机 80）
