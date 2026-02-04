@@ -4,14 +4,15 @@
 
 ## 1. 服务器环境准备
 
-在目标服务器上，需要安装 Docker 和 Docker Compose。
+本文档基于 **Ubuntu 20.04/22.04 LTS** 编写。在目标服务器上，需要安装 Docker 和 Docker Config。
 
 ```bash
 # SSH 登录服务器
 ssh root@159.75.67.162
 
-# 1. 更新系统
+# 1. 更新系统并安装基础工具
 apt-get update && apt-get upgrade -y
+apt-get install -y curl git
 
 # 2. 安装 Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
