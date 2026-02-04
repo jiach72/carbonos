@@ -233,3 +233,76 @@ jobs:
 - **Permission denied (publickey)**: 检查 Secret 中的 `SSH_PRIVATE_KEY` 是否正确，且公钥已添加到服务器。
 - **Login failed**: 确保 Workflow 有 `packages: write` 权限。
 - **Container name conflict**: 部署脚本中使用了 `--remove-orphans` 清理旧容器。
+
+## 6. 域名解析 (Cloudflare)
+
+您需要在 Cloudflare 控制台添加以下 DNS 记录，将域名指向通过 GitHub Actions 部署的服务器 IP。
+
+| 类型 (Type) | 名称 (Name) | 内容 (Content) | 代理状态 (Proxy Status) | 说明 |
+|---|---|---|---|---|
+| `A` | `@` | `159.75.67.162` | Proxied (橙色云朵) | 主域名 `scdc.cloud` |
+| `A` | `www` | `159.75.67.162` | Proxied (橙色云朵) | `www.scdc.cloud` |
+| `A` | `api` | `159.75.67.162` | Proxied (橙色云朵) | `api.scdc.cloud` |
+
+## 7. 反向代理配置 (Nginx)
+
+为了通过域名 (`80/443` 端口) 访问到 Docker 容器中的服务 (`3000/8000` 端口)，建议在服务器宿主机上配置 Nginx。
+
+### 7.1 安装 Nginx
+
+```bash
+apt-get install -y nginx certbot python3-certbot-nginx
+```
+
+### 7.2 配置 Nginx
+
+创建配置文件 `/etc/nginx/sites-available/scdc.cloud`：
+
+```nginx
+# 前端 (scdc.cloud & www.scdc.cloud)
+server {
+    listen 80;
+    server_name scdc.cloud www.scdc.cloud;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+
+# 后端 API (api.scdc.cloud)
+server {
+    listen 80;
+    server_name api.scdc.cloud;
+
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+启用配置：
+
+```bash
+ln -s /etc/nginx/sites-available/scdc.cloud /etc/nginx/sites-enabled/
+rm /etc/nginx/sites-enabled/default  # 移除默认配置（可选）
+nginx -t
+systemctl reload nginx
+```
+
+### 7.3 配置 HTTPS (Cloudflare 模式)
+
+如果您在 Cloudflare 开启了 **Proxied (橙色云朵)** 模式，且 SSL/TLS 设置为 **Flexible**，则上述 Nginx 配置 (监听 80 端口) 即可直接工作。
+
+如果设置为 **Full** 或 **Full (Strict)**，建议使用 Certbot 生成自签名或有效证书，或使用 Cloudflare Origin CA 证书。
+
+> **推荐最简方案**: Cloudflare SSL 设置为 **Flexible**，Nginx 仅监听 80 端口。Cloudflare 负责处理 HTTPS 到 HTTP 的回源。
