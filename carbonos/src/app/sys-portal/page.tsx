@@ -90,7 +90,7 @@ export default function AdminLoginPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="admin@scdc.cloud"
+                                placeholder="请输入管理员邮箱"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
