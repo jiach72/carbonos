@@ -9,12 +9,12 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
+# 复制应用代码
+COPY app ./app
+
 # 安装 Python 依赖
 COPY pyproject.toml ./
 RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple .
-
-# 复制应用代码
-COPY app ./app
 
 # 创建非 root 用户
 RUN addgroup --system --gid 1001 appgroup \
