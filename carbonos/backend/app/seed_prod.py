@@ -60,7 +60,7 @@ async def seed_data():
                 org_hq = Organization(
                     name="ABC Tech 总部",
                     code="abc_hq",
-                    type=OrganizationType.HEADQUARTER,
+                    type=OrganizationType.PARK,  # 园区类型
                     tenant_id=tenant.id
                 )
                 db.add(org_hq)
@@ -68,7 +68,7 @@ async def seed_data():
                 org_factory = Organization(
                     name="苏州制造工厂",
                     code="abc_sz_factory",
-                    type=OrganizationType.FACTORY,
+                    type=OrganizationType.ENTERPRISE,  # 企业类型
                     tenant_id=tenant.id,
                     parent_id=org_hq.id
                 )
