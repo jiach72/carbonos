@@ -11,7 +11,7 @@ sys.path.append(".")
 from sqlalchemy import select
 from app.core.database import async_session_maker
 from app.core.security import get_password_hash
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, UserStatus
 from app.models.tenant import Tenant, TenantPlan
 from app.models.organization import Organization, OrganizationType
 from app.models.carbon import CarbonEmission, EmissionScope, EmissionFactor
@@ -34,7 +34,7 @@ async def seed_data():
                     password_hash=get_password_hash("123456"),
                     full_name="Super Admin",
                     role=UserRole.ADMIN,  # 使用 ADMIN 角色（无 OD_ADMIN）
-                    is_active=True
+                    status=UserStatus.ACTIVE
                 )
                 db.add(admin)
                 logger.info("Created Super Admin: admin@scdc.cloud")
@@ -82,7 +82,7 @@ async def seed_data():
                     full_name="Test Manager",
                     role=UserRole.ADMIN,
                     tenant_id=tenant.id,
-                    is_active=True
+                    status=UserStatus.ACTIVE
                 )
                 db.add(test_user)
                 logger.info("Created Test Tenant User: user@abc.com")
