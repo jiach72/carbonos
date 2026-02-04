@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   nginx:
     image: nginx:alpine
@@ -25,7 +23,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://carbonos:carbonos@postgres:5432/carbonos
       - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=${SECRET_KEY}
+      - SECRET_KEY=${SECRET_KEY:-changeme-in-production}
     depends_on:
       postgres:
         condition: service_healthy
