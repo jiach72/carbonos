@@ -15,6 +15,7 @@ from app.models.user import User, UserRole, UserStatus
 from app.models.tenant import Tenant, TenantPlan
 from app.models.organization import Organization, OrganizationType
 from app.models.carbon import CarbonEmission, EmissionScope, EmissionFactor
+from app.models.energy import EnergyData
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
