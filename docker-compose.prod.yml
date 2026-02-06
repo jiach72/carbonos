@@ -13,7 +13,7 @@ services:
       - carbonos-network
 
   frontend:
-    image: registry.cn-hangzhou.aliyuncs.com/${ALIYUN_NAMESPACE}/carbonos-frontend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/carbonos-frontend:latest
     environment:
       - BACKEND_URL=http://backend:8000
     restart: always
@@ -21,7 +21,7 @@ services:
       - carbonos-network
 
   backend:
-    image: registry.cn-hangzhou.aliyuncs.com/${ALIYUN_NAMESPACE}/carbonos-backend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/carbonos-backend:latest
     environment:
       - DATABASE_URL=postgresql+asyncpg://carbonos:carbonos@postgres:5432/carbonos
       - REDIS_URL=redis://redis:6379/0
