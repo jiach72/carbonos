@@ -19,6 +19,7 @@ dependencies = [
     "langchain>=0.1.0",
     "httpx>=0.26.0",
     "alembic>=1.13.0",
+    "psycopg2-binary>=2.9.9",  # Alembic 同步迁移需要
     "structlog>=24.1.0",  # P1-004: 结构化日志
     "prometheus-client>=0.20.0",  # P2: Prometheus 监控
 ]

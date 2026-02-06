@@ -19,6 +19,8 @@ from app.models.user import User
 from app.models.organization import Organization
 from app.models.carbon import CarbonEmission, CarbonInventory, EmissionFactor
 from app.models.energy import EnergyData
+from app.models.audit import AuditLog  # P2: 审计日志
+from app.models.tenant_config import TenantConfig  # P2: 租户配置
 
 # Alembic 配置对象
 config = context.config

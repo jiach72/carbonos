@@ -3,6 +3,9 @@
 P0-003: 使用 get_superuser 依赖替代手动检查
 """
 
+import enum
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,10 +13,10 @@ from sqlalchemy import select, func
 
 from app.core.database import get_db
 from app.core.permissions import get_superuser  # P0-003: 统一权限依赖
-from app.models.user import User
+from app.core.security import get_password_hash
+from app.models.user import User, UserRole
 from app.models.tenant import Tenant, TenantStatus, TenantPlan
 from app.models.carbon import CarbonEmission
-from app.models.user import UserRole
 
 
 router = APIRouter(prefix="/admin", tags=["超级管理员"])
@@ -428,11 +431,6 @@ class StaffResponse(BaseModel):
     status: str
     created_at: datetime
     last_login_at: Optional[datetime]
-
-
-import enum
-from typing import Optional
-from app.core.security import get_password_hash
 
 
 @router.get("/staff", response_model=list[StaffResponse])

@@ -15,6 +15,10 @@ RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debi
 # 复制应用代码
 COPY app ./app
 
+# 复制 Alembic 迁移文件
+COPY alembic ./alembic
+COPY alembic.ini ./
+
 # 安装 Python 依赖
 COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple .
