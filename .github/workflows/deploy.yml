@@ -112,7 +112,7 @@ jobs:
             sleep 10
             
             # 运行数据库迁移 (关键步骤！)
-            sudo docker compose -f docker-compose.prod.yml exec -T backend alembic upgrade head || echo "Migration may not be needed or already up to date"
+            sudo docker compose -f docker-compose.prod.yml exec -T backend alembic upgrade head
             
             # 清理无用镜像
             sudo docker image prune -f
