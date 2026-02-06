@@ -1,5 +1,6 @@
 """
 超级管理员 API
+P0-003: 使用 get_superuser 依赖替代手动检查
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -8,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.core.database import get_db
-from app.api.deps import get_current_active_user
+from app.core.permissions import get_superuser  # P0-003: 统一权限依赖
 from app.models.user import User
 from app.models.tenant import Tenant, TenantStatus, TenantPlan
 from app.models.carbon import CarbonEmission
@@ -49,11 +50,9 @@ async def update_tenant_status(
     tenant_id: uuid.UUID,
     status_update: TenantStatusUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_superuser)  # P0-003: 使用统一权限依赖
 ):
     """更新租户状态 (停用/启用)"""
-    if current_user.tenant_id is not None:
-        raise HTTPException(status_code=403, detail="权限不足")
         
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = result.scalar_one_or_none()
@@ -84,11 +83,9 @@ async def update_tenant_plan(
     tenant_id: uuid.UUID,
     plan_update: TenantPlanUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_superuser)  # P0-003: 统一权限
 ):
     """更新租户订阅套餐"""
-    if current_user.tenant_id is not None:
-        raise HTTPException(status_code=403, detail="权限不足")
         
     tenant = await db.get(Tenant, tenant_id)
     if not tenant:
@@ -115,13 +112,10 @@ async def reset_tenant_password(
     tenant_id: uuid.UUID,
     reset_data: TenantPasswordReset,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_superuser)  # P0-003: 统一权限
 ):
     """重置租户管理员密码 (根据 Tenant.contact_email 查找用户)"""
     from app.core.security import get_password_hash
-    
-    if current_user.tenant_id is not None:
-        raise HTTPException(status_code=403, detail="权限不足")
         
     tenant = await db.get(Tenant, tenant_id)
     if not tenant:
@@ -155,11 +149,9 @@ async def reset_tenant_password(
 @router.get("/stats", response_model=GlobalStats)
 async def get_global_stats(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_superuser)  # P0-003: 统一权限
 ):
     """获取全平台运营数据"""
-    if current_user.tenant_id is not None:
-        raise HTTPException(status_code=403, detail="权限不足")
         
     # 1. Total Tenants
     tenant_count = await db.scalar(select(func.count(Tenant.id)))
@@ -184,11 +176,9 @@ async def get_global_stats(
 async def get_tenant_detail(
     tenant_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_superuser)  # P0-003: 统一权限
 ):
     """获取租户详情"""
-    if current_user.tenant_id is not None:
-        raise HTTPException(status_code=403, detail="权限不足")
         
     # 查询租户信息及管理员邮箱
     # 这里简化处理，TenantStats 已经包含了主要信息
@@ -223,13 +213,9 @@ async def get_tenant_detail(
 @router.get("/tenants", response_model=list[TenantStats])
 async def list_all_tenants(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_superuser)  # P0-003: 统一权限
 ):
-    # ... (existing content)
     """获取所有租户列表 (仅限超级管理员)"""
-    # 简单的超级管理员检查: 如果有 tenant_id 则不是超级管理员
-    if current_user.tenant_id is not None:
-        raise HTTPException(status_code=403, detail="权限不足")
         
     # 查询租户及用户数量
     # select t.*, count(u.id) from tenants t left join users u on u.tenant_id = t.id group by t.id
@@ -272,11 +258,9 @@ class DashboardCharts(BaseModel):
 @router.get("/stats/trend", response_model=DashboardCharts)
 async def get_dashboard_charts(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_superuser)  # P0-003: 统一权限
 ):
     """获取仪表盘图表数据 (趋势与分布)"""
-    if current_user.tenant_id is not None:
-        raise HTTPException(status_code=403, detail="权限不足")
         
     # 1. 租户增长趋势 (最近6个月)
     # PostgreSQL date_trunc
@@ -352,11 +336,9 @@ class PlatformSettingsUpdate(BaseModel):
 @router.get("/settings", response_model=PlatformSettingsResponse)
 async def get_platform_settings(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_superuser)  # P0-003: 统一权限
 ):
     """获取平台全局设置"""
-    if current_user.tenant_id is not None:
-        raise HTTPException(status_code=403, detail="权限不足")
     
     result = await db.execute(select(PlatformSettings).where(PlatformSettings.id == 1))
     settings = result.scalar_one_or_none()
@@ -378,11 +360,9 @@ async def get_platform_settings(
 async def update_platform_settings(
     data: PlatformSettingsUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_superuser)  # P0-003: 统一权限
 ):
     """更新平台全局设置"""
-    if current_user.tenant_id is not None:
-        raise HTTPException(status_code=403, detail="权限不足")
     
     result = await db.execute(select(PlatformSettings).where(PlatformSettings.id == 1))
     settings = result.scalar_one_or_none()
@@ -392,16 +372,16 @@ async def update_platform_settings(
         db.add(settings)
         await db.flush()
     
-    if settings_update.allow_self_registration is not None:
-        settings.allow_self_registration = settings_update.allow_self_registration
-    if settings_update.require_approval is not None:
-        settings.require_approval = settings_update.require_approval
-    if settings_update.ai_api_key is not None:
-        settings.ai_api_key = settings_update.ai_api_key
-    if settings_update.ai_api_base is not None:
-        settings.ai_api_base = settings_update.ai_api_base
-    if settings_update.ai_model is not None:
-        settings.ai_model = settings_update.ai_model
+    if data.allow_self_registration is not None:
+        settings.allow_self_registration = data.allow_self_registration
+    if data.require_approval is not None:
+        settings.require_approval = data.require_approval
+    if data.ai_api_key is not None:
+        settings.ai_api_key = data.ai_api_key
+    if data.ai_api_base is not None:
+        settings.ai_api_base = data.ai_api_base
+    if data.ai_model is not None:
+        settings.ai_model = data.ai_model
         
     await db.commit()
     await db.refresh(settings)

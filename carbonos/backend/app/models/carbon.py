@@ -1,10 +1,11 @@
 """
 碳核算数据模型
+P1-005: 添加复合索引优化查询性能
 """
 
 import uuid
 from datetime import datetime
-from sqlalchemy import String, DateTime, Float, ForeignKey, Enum as SQLEnum, Text, Boolean
+from sqlalchemy import String, DateTime, Float, ForeignKey, Enum as SQLEnum, Text, Boolean, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 import enum
@@ -84,6 +85,13 @@ class CarbonEmission(Base):
     remarks: Mapped[str | None] = mapped_column(Text)
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    
+    # P1-005: 复合索引优化多租户查询性能
+    __table_args__ = (
+        Index('ix_carbon_emissions_tenant_org', 'tenant_id', 'organization_id'),
+        Index('ix_carbon_emissions_tenant_date', 'tenant_id', 'calculation_date'),
+        Index('ix_carbon_emissions_tenant_scope', 'tenant_id', 'scope'),
+    )
 
 
 class CarbonInventory(Base):

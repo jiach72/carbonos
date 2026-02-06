@@ -71,6 +71,7 @@ class CarbonCalculationEngine:
         factor_id: Optional[uuid.UUID] = None,
         period_start: Optional[datetime] = None,
         period_end: Optional[datetime] = None,
+        tenant_id: Optional[uuid.UUID] = None,  # P0-002: 添加租户 ID 参数
     ) -> CarbonEmission:
         """计算碳排放"""
         factor_value, factor_unit, scope = await self.get_emission_factor(energy_type, factor_id)
@@ -79,9 +80,14 @@ class CarbonCalculationEngine:
         emission_kg = activity_data * factor_value
         emission_ton = emission_kg / 1000
         
+        # P0-002: 验证 tenant_id 必须存在
+        if tenant_id is None:
+            raise ValueError("tenant_id 是必填参数，用于多租户数据隔离")
+        
         # 创建排放记录
         emission = CarbonEmission(
             organization_id=organization_id,
+            tenant_id=tenant_id,  # P0-002: 必须设置租户 ID
             scope=scope,
             activity_data=activity_data,
             activity_unit=activity_unit,
@@ -89,6 +95,7 @@ class CarbonCalculationEngine:
             calculation_date=datetime.utcnow(),
             period_start=period_start,
             period_end=period_end,
+            emission_factor_id=factor_id,  # 关联排放因子
         )
         
         self.db.add(emission)

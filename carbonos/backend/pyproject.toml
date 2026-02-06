@@ -19,6 +19,8 @@ dependencies = [
     "langchain>=0.1.0",
     "httpx>=0.26.0",
     "alembic>=1.13.0",
+    "structlog>=24.1.0",  # P1-004: 结构化日志
+    "prometheus-client>=0.20.0",  # P2: Prometheus 监控
 ]
 
 [project.optional-dependencies]

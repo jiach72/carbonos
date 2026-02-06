@@ -1,5 +1,6 @@
 """
 碳核算 API 路由
+P0-002: 添加多租户数据隔离
 """
 
 import uuid
@@ -10,7 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.core.database import get_db
+from app.core.permissions import get_tenant_user, tenant_filter, get_tenant_id  # P0-002: 租户隔离
 from app.models.carbon import EmissionFactor, CarbonEmission, CarbonInventory, EmissionScope
+from app.models.user import User
 from app.schemas.carbon import (
     EmissionFactorCreate,
     EmissionFactorResponse,
@@ -26,20 +29,15 @@ router = APIRouter(prefix="/carbon", tags=["碳核算"])
 
 # ============ 排放因子管理 ============
 
-from app.api.deps import get_current_active_user
-from app.models.user import User
-
-# ============ 排放因子管理 ============
+from app.core.permissions import get_superuser
 
 @router.post("/factors", response_model=EmissionFactorResponse, status_code=status.HTTP_201_CREATED)
 async def create_emission_factor(
     factor_data: EmissionFactorCreate,
     db: AsyncSession = Depends(get_db),
-    # 暂时不需要 User，因为排放因子库通常是公共的，或者是系统管理员维护
-    # V2.0 逻辑：如果是租户创建的，则标记 source=tenant，否则是 public
-    # 这里先简单处理，允许 Admin 创建
+    current_user: User = Depends(get_superuser)  # P0-002: 仅超管可创建排放因子
 ):
-    """创建排放因子 (Admin)"""
+    """创建排放因子 (仅限超级管理员)"""
     factor = EmissionFactor(
         name=factor_data.name,
         category=factor_data.category,
@@ -64,14 +62,12 @@ async def list_emission_factors(
     energy_type: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取排放因子列表 (Public)"""
+    """获取排放因子列表 (Public - 排放因子是公共资源)"""
     query = select(EmissionFactor)
     if category:
         query = query.where(EmissionFactor.category == category)
     if energy_type:
         query = query.where(EmissionFactor.energy_type == energy_type)
-    
-    # TODO: 未来可以增加过滤 tenant_id IS NULL OR tenant_id = current_user.tenant_id
     
     result = await db.execute(query.order_by(EmissionFactor.category))
     return result.scalars().all()
@@ -82,9 +78,13 @@ async def list_emission_factors(
 @router.post("/calculate", response_model=CarbonEmissionResponse)
 async def calculate_emission(
     request: CarbonCalculateRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_tenant_user)  # P0-002: 需要租户用户
 ):
     """计算碳排放"""
+    # P0-002: 验证用户有权访问该组织的数据
+    tenant_id = get_tenant_id(current_user)
+    
     engine = CarbonCalculationEngine(db)
     
     try:
@@ -96,6 +96,7 @@ async def calculate_emission(
             factor_id=request.emission_factor_id,
             period_start=request.period_start,
             period_end=request.period_end,
+            tenant_id=tenant_id,  # P0-002: 传递租户 ID
         )
         return emission
     except ValueError as e:
@@ -110,10 +111,15 @@ async def list_emissions(
     organization_id: uuid.UUID,
     scope: Optional[str] = Query(None),
     limit: int = Query(100, le=1000),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_tenant_user)  # P0-002: 需要租户用户
 ):
     """获取碳排放记录"""
-    query = select(CarbonEmission).where(CarbonEmission.organization_id == organization_id)
+    # P0-002: 添加租户隔离过滤
+    query = select(CarbonEmission).where(
+        CarbonEmission.organization_id == organization_id,
+        CarbonEmission.tenant_id == current_user.tenant_id  # 关键：租户隔离
+    )
     
     if scope:
         query = query.where(CarbonEmission.scope == EmissionScope(scope))
@@ -128,7 +134,8 @@ async def get_carbon_summary(
     organization_id: uuid.UUID,
     year: int = Query(...),
     month: Optional[int] = Query(None),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_tenant_user)  # P0-002: 需要租户用户
 ):
     """获取碳排放汇总"""
     # 构建日期范围
@@ -144,12 +151,13 @@ async def get_carbon_summary(
         end = datetime(year + 1, 1, 1)
         period = f"{year}年"
     
-    # 按范围统计
+    # P0-002: 添加租户隔离过滤
     query = select(
         CarbonEmission.scope,
         func.sum(CarbonEmission.emission_amount).label("total")
     ).where(
         CarbonEmission.organization_id == organization_id,
+        CarbonEmission.tenant_id == current_user.tenant_id,  # 关键：租户隔离
         CarbonEmission.calculation_date >= start,
         CarbonEmission.calculation_date < end
     ).group_by(CarbonEmission.scope)
@@ -178,10 +186,15 @@ async def get_carbon_summary(
 async def list_inventories(
     organization_id: uuid.UUID,
     year: Optional[int] = Query(None),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_tenant_user)  # P0-002: 需要租户用户
 ):
     """获取碳盘查记录"""
-    query = select(CarbonInventory).where(CarbonInventory.organization_id == organization_id)
+    # P0-002: 添加租户隔离过滤
+    query = select(CarbonInventory).where(
+        CarbonInventory.organization_id == organization_id,
+        CarbonInventory.tenant_id == current_user.tenant_id  # 关键：租户隔离
+    )
     
     if year:
         query = query.where(CarbonInventory.year == year)

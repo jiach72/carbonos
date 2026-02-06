@@ -34,12 +34,17 @@ async def seed_data():
                     email="admin@scdc.cloud",
                     password_hash=get_password_hash("123456"),
                     full_name="Super Admin",
-                    role=UserRole.ADMIN,  # 使用 ADMIN 角色（无 OD_ADMIN）
-                    status=UserStatus.ACTIVE
+                    role=UserRole.ADMIN,
+                    status=UserStatus.ACTIVE,
+                    is_superuser=True  # P0-003: 明确标识超级管理员
                 )
                 db.add(admin)
-                logger.info("Created Super Admin: admin@scdc.cloud")
+                logger.info("Created Super Admin: admin@scdc.cloud (is_superuser=True)")
             else:
+                # P0-003: 确保现有超管有正确的标识
+                if not admin.is_superuser:
+                    admin.is_superuser = True
+                    logger.info("Updated Super Admin: set is_superuser=True")
                 logger.info("Super Admin already exists.")
 
             # 2. 创建测试租户 (ABC Tech)

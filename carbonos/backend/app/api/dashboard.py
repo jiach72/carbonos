@@ -1,5 +1,6 @@
 """
 仪表盘 API 路由
+P0-002: 添加多租户数据隔离
 """
 
 import uuid
@@ -10,8 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.core.database import get_db
+from app.core.permissions import get_tenant_user  # P0-002: 租户隔离
 from app.models.carbon import CarbonEmission, EmissionScope
 from app.models.energy import EnergyData, EnergyType
+from app.models.user import User
 
 router = APIRouter(prefix="/dashboard", tags=["仪表盘"])
 
@@ -19,16 +22,21 @@ router = APIRouter(prefix="/dashboard", tags=["仪表盘"])
 @router.get("/summary")
 async def get_dashboard_summary(
     organization_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_tenant_user)  # P0-002: 需要租户用户
 ):
     """获取仪表盘核心指标"""
     now = datetime.utcnow()
     this_month_start = datetime(now.year, now.month, 1)
     last_month_start = (this_month_start - timedelta(days=1)).replace(day=1)
     
+    # P0-002: 所有查询都添加租户过滤
+    tenant_id = current_user.tenant_id
+    
     # 1. 本月总排放
     query_emission = select(func.sum(CarbonEmission.emission_amount)).where(
         CarbonEmission.organization_id == organization_id,
+        CarbonEmission.tenant_id == tenant_id,  # P0-002: 租户隔离
         CarbonEmission.calculation_date >= this_month_start
     )
     total_emission = (await db.execute(query_emission)).scalar() or 0
@@ -36,6 +44,7 @@ async def get_dashboard_summary(
     # 2. 上月排放（用于环比）
     query_last_emission = select(func.sum(CarbonEmission.emission_amount)).where(
         CarbonEmission.organization_id == organization_id,
+        CarbonEmission.tenant_id == tenant_id,  # P0-002: 租户隔离
         CarbonEmission.calculation_date >= last_month_start,
         CarbonEmission.calculation_date < this_month_start
     )
@@ -45,6 +54,7 @@ async def get_dashboard_summary(
     # 3. 本月能耗费用
     query_cost = select(func.sum(EnergyData.cost)).where(
         EnergyData.organization_id == organization_id,
+        EnergyData.tenant_id == tenant_id,  # P0-002: 租户隔离
         EnergyData.data_date >= this_month_start.date()
     )
     total_cost = (await db.execute(query_cost)).scalar() or 0
@@ -53,6 +63,7 @@ async def get_dashboard_summary(
     yearly_target = 5000
     query_year_emission = select(func.sum(CarbonEmission.emission_amount)).where(
         CarbonEmission.organization_id == organization_id,
+        CarbonEmission.tenant_id == tenant_id,  # P0-002: 租户隔离
         CarbonEmission.calculation_date >= datetime(now.year, 1, 1)
     )
     current_year_emission = (await db.execute(query_year_emission)).scalar() or 0
@@ -72,16 +83,18 @@ async def get_dashboard_summary(
 async def get_dashboard_trends(
     organization_id: uuid.UUID,
     period: str = Query("month", description="周期: month/year"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_tenant_user)  # P0-002: 需要租户用户
 ):
     """获取排放趋势图表数据"""
     now = datetime.utcnow()
     data = []
+    tenant_id = current_user.tenant_id  # P0-002: 获取租户 ID
     
     if period == "year":
         # 最近12个月
         for i in range(11, -1, -1):
-            date_point = now - timedelta(days=i*30) # 简化计算
+            date_point = now - timedelta(days=i*30)  # 简化计算
             start = datetime(date_point.year, date_point.month, 1)
             if start.month == 12:
                 end = datetime(start.year + 1, 1, 1)
@@ -90,6 +103,7 @@ async def get_dashboard_trends(
             
             query = select(func.sum(CarbonEmission.emission_amount)).where(
                 CarbonEmission.organization_id == organization_id,
+                CarbonEmission.tenant_id == tenant_id,  # P0-002: 租户隔离
                 CarbonEmission.calculation_date >= start,
                 CarbonEmission.calculation_date < end
             )
@@ -100,7 +114,22 @@ async def get_dashboard_trends(
             })
     else:
         # 最近30天
-        pass # 简化，暂只实现月度趋势
+        for i in range(29, -1, -1):
+            date_point = now - timedelta(days=i)
+            start = datetime(date_point.year, date_point.month, date_point.day)
+            end = start + timedelta(days=1)
+            
+            query = select(func.sum(CarbonEmission.emission_amount)).where(
+                CarbonEmission.organization_id == organization_id,
+                CarbonEmission.tenant_id == tenant_id,  # P0-002: 租户隔离
+                CarbonEmission.calculation_date >= start,
+                CarbonEmission.calculation_date < end
+            )
+            val = (await db.execute(query)).scalar() or 0
+            data.append({
+                "name": f"{date_point.day}日",
+                "value": round(val, 2)
+            })
         
     return data
 
@@ -108,17 +137,20 @@ async def get_dashboard_trends(
 @router.get("/distribution")
 async def get_emission_distribution(
     organization_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_tenant_user)  # P0-002: 需要租户用户
 ):
     """获取排放构成（按范围）"""
     now = datetime.utcnow()
     start_year = datetime(now.year, 1, 1)
+    tenant_id = current_user.tenant_id  # P0-002: 获取租户 ID
     
     query = select(
         CarbonEmission.scope,
         func.sum(CarbonEmission.emission_amount)
     ).where(
         CarbonEmission.organization_id == organization_id,
+        CarbonEmission.tenant_id == tenant_id,  # P0-002: 租户隔离
         CarbonEmission.calculation_date >= start_year
     ).group_by(CarbonEmission.scope)
     
