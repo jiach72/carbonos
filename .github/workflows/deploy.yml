@@ -57,42 +57,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Prepare Images for Offline Transfer (China Optimization)
-        run: |
-          # Define image names
-          FRONTEND_IMG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest"
-          BACKEND_IMG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest"
-          
-          echo "Pulling images to Runner..."
-          docker pull $FRONTEND_IMG
-          docker pull $BACKEND_IMG
-          
-          echo "Saving and compressing images..."
-          docker save $FRONTEND_IMG | gzip > frontend.tar.gz
-          docker save $BACKEND_IMG | gzip > backend.tar.gz
-          
-          ls -lh *.tar.gz
-
-      - name: Setup Server Directories
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
-          script: |
-            mkdir -p ~/apps/carbonos/nginx
-
-      - name: Copy Config and Images to Server
+      - name: Copy Config to Server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "docker-compose.prod.yml,nginx/nginx.conf,frontend.tar.gz,backend.tar.gz"
+          # Only copy config, no tarballs
+          source: "docker-compose.prod.yml,nginx/nginx.conf"
           target: "~/apps/carbonos/"
-          timeout: 30m
+          timeout: 5m
 
       - name: Execute deployment commands
         uses: appleboy/ssh-action@master
@@ -101,7 +76,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          command_timeout: 30m
+          command_timeout: 30m # Keep long timeout for slow GHCR connection
           script: |
             cd ~/apps/carbonos
             
@@ -111,27 +86,22 @@ jobs:
                 rm -rf nginx
             fi
             
-            # 2. Replace namespace variable
+            # 2. Docker Login (Required for private GHCR)
+            echo ${{ secrets.GITHUB_TOKEN }} | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # 3. Replace namespace variable
             sed -i 's/${GITHUB_REPOSITORY_OWNER}/${{ github.repository_owner }}/g' docker-compose.prod.yml
             
-            # 3. Load Images locally (Bypass GFW)
-            echo "Loading Docker images locally..."
-            if [ -f "frontend.tar.gz" ]; then
-                docker load < frontend.tar.gz
-                rm frontend.tar.gz
-            fi
+            # 4. Pull Images (Incremental update)
+            # Using -q to prevent log buffer overflow
+            sudo docker compose -f docker-compose.prod.yml pull -q
             
-            if [ -f "backend.tar.gz" ]; then
-                docker load < backend.tar.gz
-                rm backend.tar.gz
-            fi
-            
-            # 4. Start Services
+            # 5. Start Services
             sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
             
-            # 5. Migration
+            # 6. Migration
             sleep 10
             sudo docker compose -f docker-compose.prod.yml exec -T backend alembic upgrade head
             
-            # 6. Cleanup
+            # 7. Cleanup
             sudo docker image prune -f
