@@ -25,7 +25,7 @@ export default function TenantsPage() {
         setLoading(true);
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch("http://localhost:8000/api/v1/admin/tenants", {
+            const res = await fetch("/api/v1/admin/tenants", {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -49,7 +49,7 @@ export default function TenantsPage() {
     const updateStatus = async (id: string, newStatus: string) => {
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch(`http://localhost:8000/api/v1/admin/tenants/${id}/status`, {
+            const res = await fetch(`/api/v1/admin/tenants/${id}/status`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",

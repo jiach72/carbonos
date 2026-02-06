@@ -23,7 +23,7 @@ export default function PCFDetailPage() {
         const fetchProduct = async () => {
             try {
                 // 真实 API
-                const res = await fetch(`http://localhost:8000/api/v1/pcf/products/${params.id}`);
+                const res = await fetch(`/api/v1/pcf/products/${params.id}`);
                 if (!res.ok) throw new Error("Product not found");
                 const data = await res.json();
                 setProduct(data);

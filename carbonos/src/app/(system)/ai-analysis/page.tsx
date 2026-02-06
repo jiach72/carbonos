@@ -23,7 +23,7 @@ export default function AIAnalysisPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch("http://localhost:8000/api/v1/simulation/prediction");
+                const res = await fetch("/api/v1/simulation/prediction");
                 const json = await res.json();
 
                 // 合并历史和预测数据，用于图表展示

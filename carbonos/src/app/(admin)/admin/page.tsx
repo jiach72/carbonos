@@ -38,13 +38,13 @@ export default function AdminDashboardPage() {
                 const headers = { "Authorization": `Bearer ${token}` };
 
                 // Fetch stats
-                const resStats = await fetch("http://localhost:8000/api/v1/admin/stats", { headers });
+                const resStats = await fetch("/api/v1/admin/stats", { headers });
                 if (resStats.ok) {
                     setStats(await resStats.json());
                 }
 
                 // Fetch charts
-                const resCharts = await fetch("http://localhost:8000/api/v1/admin/stats/trend", { headers });
+                const resCharts = await fetch("/api/v1/admin/stats/trend", { headers });
                 if (resCharts.ok) {
                     setCharts(await resCharts.json());
                 }

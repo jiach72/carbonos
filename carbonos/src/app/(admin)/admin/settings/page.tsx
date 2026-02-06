@@ -36,7 +36,7 @@ export default function AdminSettingsPage() {
         const fetchSettings = async () => {
             try {
                 const token = localStorage.getItem("access_token");
-                const response = await fetch("http://localhost:8000/api/v1/admin/settings", {
+                const response = await fetch("/api/v1/admin/settings", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -62,7 +62,7 @@ export default function AdminSettingsPage() {
         setAllowSelfRegistration(checked);
         try {
             const token = localStorage.getItem("access_token");
-            const response = await fetch("http://localhost:8000/api/v1/admin/settings", {
+            const response = await fetch("/api/v1/admin/settings", {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -98,7 +98,7 @@ export default function AdminSettingsPage() {
         setAiSaving(true);
         try {
             const token = localStorage.getItem("access_token");
-            const response = await fetch("http://localhost:8000/api/v1/admin/settings", {
+            const response = await fetch("/api/v1/admin/settings", {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",

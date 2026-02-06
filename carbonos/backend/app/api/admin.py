@@ -393,3 +393,177 @@ async def update_platform_settings(
         ai_api_base=settings.ai_api_base,
         ai_model=settings.ai_model
     )
+
+
+# ============ 平台员工管理 API ============
+
+class StaffRole(str, enum.Enum):
+    """平台员工角色"""
+    OPERATOR = "operator"    # 运营：租户管理、数据查看
+    SUPPORT = "support"      # 客服：租户只读、工单处理
+    AUDITOR = "auditor"      # 审计：审计日志查看
+
+
+class StaffCreate(BaseModel):
+    """创建平台员工"""
+    email: str
+    password: str
+    full_name: str
+    role: StaffRole = StaffRole.OPERATOR
+
+
+class StaffUpdate(BaseModel):
+    """更新平台员工"""
+    full_name: Optional[str] = None
+    role: Optional[StaffRole] = None
+    is_active: Optional[bool] = None
+
+
+class StaffResponse(BaseModel):
+    """平台员工响应"""
+    id: uuid.UUID
+    email: str
+    full_name: Optional[str]
+    role: str
+    status: str
+    created_at: datetime
+    last_login_at: Optional[datetime]
+
+
+import enum
+from typing import Optional
+from app.core.security import get_password_hash
+
+
+@router.get("/staff", response_model=list[StaffResponse])
+async def list_staff(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_superuser)
+):
+    """获取平台员工列表（仅超管可访问）"""
+    # 平台员工 = 非租户用户且非超管
+    result = await db.execute(
+        select(User)
+        .where(User.tenant_id.is_(None))
+        .where(User.is_superuser == False)
+        .order_by(User.created_at.desc())
+    )
+    users = result.scalars().all()
+    
+    return [
+        StaffResponse(
+            id=u.id,
+            email=u.email,
+            full_name=u.full_name,
+            role=u.role.value if hasattr(u.role, 'value') else str(u.role),
+            status=u.status.value if hasattr(u.status, 'value') else str(u.status),
+            created_at=u.created_at,
+            last_login_at=u.last_login_at
+        )
+        for u in users
+    ]
+
+
+@router.post("/staff", response_model=StaffResponse, status_code=201)
+async def create_staff(
+    data: StaffCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_superuser)
+):
+    """创建平台员工（仅超管可操作）"""
+    # 检查邮箱重复
+    existing = await db.execute(select(User).where(User.email == data.email))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="该邮箱已被注册")
+    
+    # 映射员工角色到 UserRole
+    role_map = {
+        StaffRole.OPERATOR: UserRole.MANAGER,
+        StaffRole.SUPPORT: UserRole.USER,
+        StaffRole.AUDITOR: UserRole.VIEWER,
+    }
+    
+    user = User(
+        email=data.email,
+        password_hash=get_password_hash(data.password),
+        full_name=data.full_name,
+        role=role_map.get(data.role, UserRole.USER),
+        tenant_id=None,  # 平台员工无租户
+        is_superuser=False  # 禁止创建超管
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    
+    return StaffResponse(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        role=data.role.value,
+        status=user.status.value if hasattr(user.status, 'value') else str(user.status),
+        created_at=user.created_at,
+        last_login_at=user.last_login_at
+    )
+
+
+@router.patch("/staff/{staff_id}", response_model=StaffResponse)
+async def update_staff(
+    staff_id: uuid.UUID,
+    data: StaffUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_superuser)
+):
+    """更新平台员工（仅超管可操作）"""
+    user = await db.get(User, staff_id)
+    if not user or user.tenant_id is not None or user.is_superuser:
+        raise HTTPException(status_code=404, detail="员工不存在")
+    
+    if data.full_name is not None:
+        user.full_name = data.full_name
+    if data.role is not None:
+        role_map = {
+            StaffRole.OPERATOR: UserRole.MANAGER,
+            StaffRole.SUPPORT: UserRole.USER,
+            StaffRole.AUDITOR: UserRole.VIEWER,
+        }
+        user.role = role_map.get(data.role, UserRole.USER)
+    if data.is_active is not None:
+        from app.models.user import UserStatus
+        user.status = UserStatus.ACTIVE if data.is_active else UserStatus.INACTIVE
+    
+    await db.commit()
+    await db.refresh(user)
+    
+    # 获取显示用的角色
+    reverse_role_map = {
+        UserRole.MANAGER: "operator",
+        UserRole.USER: "support",
+        UserRole.VIEWER: "auditor",
+    }
+    
+    return StaffResponse(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        role=reverse_role_map.get(user.role, "operator"),
+        status=user.status.value if hasattr(user.status, 'value') else str(user.status),
+        created_at=user.created_at,
+        last_login_at=user.last_login_at
+    )
+
+
+@router.delete("/staff/{staff_id}", status_code=204)
+async def delete_staff(
+    staff_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_superuser)
+):
+    """删除平台员工（仅超管可操作）"""
+    user = await db.get(User, staff_id)
+    if not user or user.tenant_id is not None or user.is_superuser:
+        raise HTTPException(status_code=404, detail="员工不存在")
+    
+    await db.delete(user)
+    await db.commit()
+    return None
+

@@ -58,7 +58,7 @@ export default function SettingsPage() {
         setLoading(true);
         try {
             const token = localStorage.getItem("access_token");
-            const response = await fetch("http://localhost:8000/api/v1/auth/reset-password", {
+            const response = await fetch("/api/v1/auth/reset-password", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

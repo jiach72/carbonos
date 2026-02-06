@@ -2,6 +2,28 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // 环境变量配置
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "",
+  },
+  // API 代理配置 - 解决跨域和部署问题
+  async rewrites() {
+    const apiUrl = process.env.BACKEND_URL || "http://localhost:8000";
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${apiUrl}/api/v1/:path*`,
+      },
+      {
+        source: "/health",
+        destination: `${apiUrl}/health`,
+      },
+      {
+        source: "/metrics",
+        destination: `${apiUrl}/metrics`,
+      },
+    ];
+  },
   async headers() {
     return [
       {

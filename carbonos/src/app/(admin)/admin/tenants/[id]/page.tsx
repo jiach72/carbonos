@@ -56,7 +56,7 @@ export default function TenantDetailPage() {
     const fetchDetail = async () => {
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch(`http://localhost:8000/api/v1/admin/tenants/${params.id}`, {
+            const res = await fetch(`/api/v1/admin/tenants/${params.id}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
 
@@ -80,7 +80,7 @@ export default function TenantDetailPage() {
         setActionLoading(true);
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch(`http://localhost:8000/api/v1/admin/tenants/${params.id}/reset-password`, {
+            const res = await fetch(`/api/v1/admin/tenants/${params.id}/reset-password`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -107,7 +107,7 @@ export default function TenantDetailPage() {
         setActionLoading(true);
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch(`http://localhost:8000/api/v1/admin/tenants/${params.id}/plan`, {
+            const res = await fetch(`/api/v1/admin/tenants/${params.id}/plan`, {
                 method: "PATCH",
                 headers: {
                     "Authorization": `Bearer ${token}`,

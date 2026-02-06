@@ -47,7 +47,7 @@ export default function DiagnosticPage() {
         setLoading(true);
         try {
             const token = localStorage.getItem("access_token");
-            const res = await fetch("http://localhost:8000/api/v1/diagnostic/analyze", {
+            const res = await fetch("/api/v1/diagnostic/analyze", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

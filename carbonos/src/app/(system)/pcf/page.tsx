@@ -32,7 +32,7 @@ export default function PCFPage() {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await fetch("http://localhost:8000/api/v1/pcf/products");
+                const res = await fetch("/api/v1/pcf/products");
                 const data = await res.json();
                 setProducts(data);
             } catch (error) {

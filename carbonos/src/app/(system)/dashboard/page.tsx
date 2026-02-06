@@ -42,7 +42,7 @@ export default function DashboardPage() {
     useEffect(() => {
         const fetchRealtime = async () => {
             try {
-                const res = await fetch("http://localhost:8000/api/v1/simulation/realtime");
+                const res = await fetch("/api/v1/simulation/realtime");
                 const data = await res.json();
 
                 setSummary(prev => ({
@@ -68,7 +68,7 @@ export default function DashboardPage() {
     useEffect(() => {
         const fetchHistory = async () => {
             try {
-                const res = await fetch("http://localhost:8000/api/v1/simulation/history?days=1");
+                const res = await fetch("/api/v1/simulation/history?days=1");
                 const data = await res.json();
                 // 转换数据格式适配 Recharts
                 const formatted = data.map((item: any) => ({
