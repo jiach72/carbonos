@@ -19,6 +19,14 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # ### Create ENUM types first ###
+    audit_action_enum = postgresql.ENUM(
+        'create', 'read', 'update', 'delete', 'login', 'logout', 'export', 'import', 'admin_action',
+        name='auditaction',
+        create_type=True
+    )
+    audit_action_enum.create(op.get_bind(), checkfirst=True)
+    
     # ### Restore platform_settings ###
     op.create_table('platform_settings',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -54,7 +62,7 @@ def upgrade() -> None:
     op.create_table('audit_logs',
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('timestamp', sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.Column('action', sa.String(length=50), nullable=False), # Simplified ENUM to String for robustness or recreate ENUM
+        sa.Column('action', audit_action_enum, nullable=False),  # Use proper ENUM type
         sa.Column('resource_type', sa.String(length=100), nullable=False),
         sa.Column('resource_id', sa.String(length=100), nullable=True),
         sa.Column('user_id', sa.UUID(), nullable=False),
