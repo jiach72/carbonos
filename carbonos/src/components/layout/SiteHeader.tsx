@@ -14,6 +14,7 @@ export function SiteHeader() {
         { href: "/core-tech", label: "核心技术" },
         { href: "/energy-solutions", label: "能源解决方案" },
         { href: "/ai-computing", label: "AI 算力" },
+        { href: "/ai-models", label: "AI 模型" },
         { href: "/digital-assets", label: "数字资产" },
         { href: "/about", label: "关于我们" },
     ];
@@ -26,7 +27,11 @@ export function SiteHeader() {
                         {/* 换个 Logo 色调区分官网和产品？还是保持一致？保持一致但用蓝色代表科技 */}
                         <Leaf className="h-6 w-6 text-white" />
                     </div>
-                    <span>SCDC<span className="text-blue-500">.Cloud</span></span>
+                    <span className="flex items-baseline gap-1.5">
+                        <span>创电云</span>
+                        <span className="text-slate-500 text-lg font-normal">|</span>
+                        <span className="text-blue-400 text-lg font-medium tracking-wide">scdc.cloud</span>
+                    </span>
                 </Link>
                 <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
                     {navItems.map((item) => {
@@ -55,13 +60,8 @@ export function SiteHeader() {
                 </nav>
                 <div className="flex items-center gap-4">
                     <Link href="/login">
-                        <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/5">
-                            登录平台
-                        </Button>
-                    </Link>
-                    <Link href="/register">
                         <Button className="bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 border-0">
-                            CarbonOS 入驻
+                            CarbonOS™
                         </Button>
                     </Link>
                 </div>

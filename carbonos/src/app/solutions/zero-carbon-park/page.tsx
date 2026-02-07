@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart3, Leaf, Zap, Globe, Sun, Network, Battery, Building2, TrendingDown, CheckCircle2 } from "lucide-react";
+import { BarChart3, Leaf, Globe, Sun, Network, Battery, Building2, TrendingDown, CheckCircle2 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { Button } from "@/components/ui/button";
 
 export default function ZeroCarbonParkPage() {
     return (
@@ -18,37 +17,45 @@ export default function ZeroCarbonParkPage() {
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl opacity-40 pointer-events-none">
                         <div className="absolute top-[-20%] left-[20%] w-[600px] h-[600px] bg-emerald-500/20 blur-[120px] rounded-full mix-blend-screen animate-pulse duration-[4000ms]" />
                         <div className="absolute top-[10%] right-[10%] w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full mix-blend-screen" />
+                        <div className="absolute bottom-[10%] left-[30%] w-[400px] h-[400px] bg-teal-500/15 blur-[100px] rounded-full mix-blend-screen" />
                     </div>
 
                     <div className="container mx-auto px-6 relative z-10 text-center">
-                        <div className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/5 px-4 py-1.5 text-sm font-medium text-emerald-400 backdrop-blur-md mb-8 ring-1 ring-white/10">
-                            <span className="flex h-2 w-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
-                            CarbonOS v2.0 SaaS 现已上线
+                        <div className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-2 text-sm font-medium text-emerald-400 backdrop-blur-md mb-8 ring-1 ring-white/10 shadow-lg shadow-emerald-500/10">
+                            <span className="flex h-2 w-2 rounded-full bg-emerald-400 mr-2.5 animate-pulse"></span>
+                            CarbonOS™ v1.0 SaaS 现已上线
                         </div>
 
                         <h1 className="mx-auto max-w-4xl text-5xl font-extrabold tracking-tight sm:text-7xl mb-8 leading-[1.1]">
-                            <span className="block text-slate-300">零碳园区解决方案</span>
+                            <span className="block text-slate-200 mb-2">零碳园区解决方案</span>
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-blue-400">
                                 CarbonOS™ 智能中枢
                             </span>
                         </h1>
 
-                        <p className="mx-auto max-w-2xl text-lg text-slate-400 leading-relaxed mb-10">
-                            从顶层规划、硬件建设到数字化运营。
-                            集成源网荷储、碳核算与合规报告，助力园区跨越碳关税壁垒。
+                        <p className="mx-auto max-w-2xl text-lg text-slate-400 leading-relaxed mb-6">
+                            从顶层规划、硬件建设到数字化运营，一站式零碳转型服务。
+                        </p>
+                        <p className="mx-auto max-w-2xl text-base text-slate-500 leading-relaxed">
+                            集成源网荷储、碳核算与合规报告，助力园区跨越碳关税壁垒，抢占绿色发展先机。
                         </p>
 
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
-                            <Link href="/register">
-                                <Button size="lg" className="h-14 px-8 text-lg bg-emerald-600 hover:bg-emerald-500 text-white w-full sm:w-auto shadow-xl shadow-emerald-500/20 rounded-full transition-all hover:scale-105">
-                                    企业入驻 (SaaS) <ArrowRight className="ml-2 h-5 w-5" />
-                                </Button>
-                            </Link>
-                            <Link href="/login">
-                                <Button size="lg" variant="ghost" className="h-14 px-8 text-lg border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white w-full sm:w-auto backdrop-blur-sm rounded-full transition-all">
-                                    登录管理平台
-                                </Button>
-                            </Link>
+                        {/* 数据亮点 */}
+                        <div className="flex flex-wrap items-center justify-center gap-8 mt-14">
+                            <div className="text-center">
+                                <div className="text-3xl font-bold text-white">50+</div>
+                                <div className="text-sm text-slate-500">服务园区</div>
+                            </div>
+                            <div className="w-px h-10 bg-slate-700" />
+                            <div className="text-center">
+                                <div className="text-3xl font-bold text-white">500<span className="text-lg text-emerald-400">MWh</span></div>
+                                <div className="text-sm text-slate-500">管理资产</div>
+                            </div>
+                            <div className="w-px h-10 bg-slate-700" />
+                            <div className="text-center">
+                                <div className="text-3xl font-bold text-white">30%</div>
+                                <div className="text-sm text-slate-500">平均降碳</div>
+                            </div>
                         </div>
                     </div>
                 </section>

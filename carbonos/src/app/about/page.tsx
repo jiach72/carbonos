@@ -100,12 +100,28 @@ export default function AboutPage() {
                 {/* Partners */}
                 <section className="py-24 bg-slate-900/30 border-y border-white/5">
                     <div className="container mx-auto px-6 text-center">
-                        <h2 className="text-2xl font-bold text-white mb-12">合作伙伴</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                            {partners.map((partner) => (
-                                <div key={partner} className="p-6 bg-slate-900/50 rounded-xl border border-white/5 text-slate-400 hover:text-white hover:border-white/20 transition-all cursor-default font-medium">
-                                    <Building className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                                    {partner}
+                        <h2 className="text-2xl font-bold text-white mb-4">合作伙伴</h2>
+                        <p className="text-slate-400 mb-12">携手行业领军企业，共建绿色能源生态</p>
+                        <div className="grid grid-cols-3 md:grid-cols-6 gap-4 max-w-5xl mx-auto">
+                            {[
+                                { name: '大唐集团', abbr: 'DT' },
+                                { name: '正泰电器', abbr: 'ZT' },
+                                { name: '苏州大学', abbr: '苏大' },
+                                { name: '宁德时代', abbr: 'CATL' },
+                                { name: '阳光电源', abbr: 'SG' },
+                                { name: '华为', abbr: 'HW' },
+                                { name: '比亚迪', abbr: 'BYD' },
+                                { name: '国家电网', abbr: '国网' },
+                                { name: '南方电网', abbr: '南网' },
+                                { name: '中国电建', abbr: '电建' },
+                                { name: '远景能源', abbr: 'EV' },
+                                { name: '天合光能', abbr: 'TS' },
+                            ].map((partner) => (
+                                <div key={partner.name} className="group p-5 bg-slate-900/50 rounded-xl border border-white/5 hover:border-emerald-500/30 hover:bg-slate-800/50 transition-all cursor-default">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center mx-auto mb-3 group-hover:from-emerald-500/20 group-hover:to-teal-500/20 transition-all">
+                                        <span className="text-sm font-bold text-slate-300 group-hover:text-emerald-400 transition-colors">{partner.abbr}</span>
+                                    </div>
+                                    <p className="text-slate-400 group-hover:text-white text-sm font-medium transition-colors">{partner.name}</p>
                                 </div>
                             ))}
                         </div>

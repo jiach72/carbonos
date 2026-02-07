@@ -1,6 +1,6 @@
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { Server, Network, Cpu, Zap, Clock, BarChart3, Wrench, ChevronRight } from 'lucide-react';
+import { Server, Network, Cpu, Zap, Clock, BarChart3, Wrench, ChevronRight, Brain } from 'lucide-react';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 

@@ -14,6 +14,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # 禁用 ESLint 检查以避免构建失败
 ENV NEXT_TELEMETRY_DISABLED=1
+# 设置后端 URL，使 rewrites 在构建时使用正确的地址
+ENV BACKEND_URL=http://backend:8000
 RUN npm run build
 
 # 生产阶段
