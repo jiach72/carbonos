@@ -13,7 +13,7 @@ export default function CorporateHomePage() {
 
       <main className="flex-1">
         {/* === Hero Section === */}
-        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+        <section className="relative min-h-[80vh] sm:min-h-[90vh] flex items-center justify-center overflow-hidden py-16 sm:py-0">
           {/* Background Video Simulator */}
           <div className="absolute inset-0 z-0">
             <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 opacity-90" />
@@ -22,51 +22,51 @@ export default function CorporateHomePage() {
             <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)]" />
           </div>
 
-          <div className="container relative z-10 px-6 mx-auto text-center">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8">
+          <div className="container relative z-10 px-4 sm:px-6 mx-auto text-center">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-6 sm:mb-8">
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 animate-gradient-x">
                 绿色能源驱动智算未来
               </span>
-              <span className="block text-2xl md:text-4xl mt-4 font-light text-slate-300">
+              <span className="block text-lg sm:text-2xl md:text-4xl mt-3 sm:mt-4 font-light text-slate-300">
                 数字资产链接全球价值
               </span>
             </h1>
 
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-400 mb-12 leading-relaxed">
+            <p className="max-w-3xl mx-auto text-base sm:text-lg md:text-xl text-slate-400 mb-8 sm:mb-12 leading-relaxed px-2">
               苏州创电云 (SCDC) —— 连接物理能源世界与数字价值世界的桥梁。
               <br className="hidden md:block" />
               我们提供从 <strong>新能源管理</strong>、<strong>零碳园区</strong> 到 <strong>AI算力基建</strong> 的全栈解决方案。
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4 sm:px-0">
               <Link href="/solutions/zero-carbon-park">
-                <Button size="lg" className="h-14 px-8 text-lg bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/25">
+                <Button size="lg" className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/25">
                   探索零碳业务 <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
               <Link href="/ai-computing">
-                <Button size="lg" variant="outline" className="h-14 px-8 text-lg border-slate-700 text-slate-300 bg-transparent hover:text-white hover:bg-slate-800 rounded-full backdrop-blur-sm">
+                <Button size="lg" variant="outline" className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg border-slate-700 text-slate-300 bg-transparent hover:text-white hover:bg-slate-800 rounded-full backdrop-blur-sm">
                   了解 AI 算力
                 </Button>
               </Link>
             </div>
 
             {/* Trust Bar */}
-            <div className="mt-20 pt-10 border-t border-white/5 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div className="mt-12 sm:mt-20 pt-8 sm:pt-10 border-t border-white/5 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 text-center">
               <div>
-                <div className="text-3xl font-bold text-white font-mono">500+ <span className="text-sm font-sans text-slate-500">MWh</span></div>
+                <div className="text-2xl sm:text-3xl font-bold text-white font-mono">500+ <span className="text-xs sm:text-sm font-sans text-slate-500">MWh</span></div>
                 <div className="text-xs text-slate-400 mt-1">管理资产规模</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white font-mono">12W+ <span className="text-sm font-sans text-slate-500">吨</span></div>
+                <div className="text-2xl sm:text-3xl font-bold text-white font-mono">12W+ <span className="text-xs sm:text-sm font-sans text-slate-500">吨</span></div>
                 <div className="text-xs text-slate-400 mt-1">累计减排二氧化碳</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white font-mono">50+ <span className="text-sm font-sans text-slate-500">家</span></div>
+                <div className="text-2xl sm:text-3xl font-bold text-white font-mono">50+ <span className="text-xs sm:text-sm font-sans text-slate-500">家</span></div>
                 <div className="text-xs text-slate-400 mt-1">服务园区/企业</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white font-mono">99.9%</div>
+                <div className="text-2xl sm:text-3xl font-bold text-white font-mono">99.9%</div>
                 <div className="text-xs text-slate-400 mt-1">SLA 在线率</div>
               </div>
             </div>
@@ -74,14 +74,14 @@ export default function CorporateHomePage() {
         </section>
 
         {/* === Business Matrix (Quad) === */}
-        <section className="py-24 bg-slate-900">
-          <div className="container px-6 mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-white mb-4">云-边-端全栈布局</h2>
+        <section className="py-16 sm:py-24 bg-slate-900">
+          <div className="container px-4 sm:px-6 mx-auto">
+            <div className="text-center mb-10 sm:mb-16">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">云-边-端全栈布局</h2>
               <div className="w-20 h-1 bg-gradient-to-r from-blue-500 to-emerald-500 mx-auto rounded-full" />
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
               <MatrixCard
                 icon={Cpu}
                 title="软件引擎"
@@ -113,11 +113,11 @@ export default function CorporateHomePage() {
         </section>
 
         {/* === Core Tech === */}
-        <section className="py-24 bg-slate-950 border-t border-slate-800">
-          <div className="container px-6 mx-auto">
-            <div className="flex flex-col md:flex-row items-center gap-16">
+        <section className="py-16 sm:py-24 bg-slate-950 border-t border-slate-800">
+          <div className="container px-4 sm:px-6 mx-auto">
+            <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
               <div className="w-full md:w-1/2">
-                <h2 className="text-3xl font-bold text-white mb-6">硬核科技证明</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">硬核科技证明</h2>
                 <div className="space-y-8">
                   <TechItem
                     title="BMS 电池管理系统"

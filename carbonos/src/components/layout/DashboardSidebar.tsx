@@ -50,7 +50,12 @@ import { useRouter } from "next/navigation";
 
 // ... (navItems definition)
 
-export function DashboardSidebar() {
+interface DashboardSidebarProps {
+    /** 导航点击后的回调，用于移动端关闭抽屉 */
+    onNavigate?: () => void;
+}
+
+export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
     const pathname = usePathname();
     const router = useRouter();
 
@@ -95,7 +100,7 @@ export function DashboardSidebar() {
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
-                        <Link key={item.href} href={item.href}>
+                        <Link key={item.href} href={item.href} onClick={onNavigate}>
                             <Button
                                 variant="ghost"
                                 className={cn(
@@ -115,7 +120,7 @@ export function DashboardSidebar() {
             </div>
 
             <div className="p-4 border-t border-slate-800">
-                <Link href="/settings">
+                <Link href="/settings" onClick={onNavigate}>
                     <Button
                         variant="ghost"
                         className={cn(

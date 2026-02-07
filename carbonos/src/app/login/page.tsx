@@ -119,7 +119,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0 bg-slate-950">
+        <div className="relative min-h-screen flex flex-col lg:grid lg:grid-cols-2 bg-slate-950">
             {/* 左侧宣传区 */}
             <div className="relative hidden h-full flex-col bg-slate-900 p-10 text-white dark:border-r lg:flex border-r border-slate-800 overflow-hidden">
                 <div className="absolute inset-0 bg-slate-950" />
@@ -182,8 +182,17 @@ export default function LoginPage() {
             </div>
 
             {/* 右侧表单区 */}
-            <div className="lg:p-8 relative z-10">
-                <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[450px]">
+            <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative z-10">
+                {/* 移动端Logo显示 */}
+                <div className="absolute top-4 left-4 lg:hidden flex items-center gap-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
+                        <Leaf className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="text-xl font-bold text-white">
+                        CarbonOS<span className="text-emerald-500">™</span>
+                    </span>
+                </div>
+                <div className="w-full max-w-[400px] sm:max-w-[450px] flex flex-col justify-center space-y-6 pt-16 lg:pt-0">
                     <div className="flex flex-col space-y-2 text-center">
                         <h1 className="text-2xl font-semibold tracking-tight text-white">
                             {isLogin ? "登录账户" : "企业入驻"}
