@@ -48,7 +48,7 @@ export default function AdminLayout({
         if (!loading) {
             if (!user) {
                 // Not logged in
-                router.replace("/admin-login");
+                router.replace("/sys-portal");
             } else if (user.role !== 'admin' || user.tenant_id) {
                 // Logged in but not SUPER admin (Tenant Admins have tenant_id)
                 toast.error("权限不足", {
@@ -64,7 +64,7 @@ export default function AdminLayout({
 
     const handleLogout = () => {
         localStorage.removeItem("access_token");
-        router.push("/admin-login");
+        router.push("/sys-portal");
     };
 
     if (loading || !isAuthorized) {

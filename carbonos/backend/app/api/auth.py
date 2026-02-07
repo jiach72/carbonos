@@ -102,23 +102,73 @@ async def register(data: TenantCreateRequest, db: AsyncSession = Depends(get_db)
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"注册失败: {str(e)}")
 
+from datetime import datetime, timedelta
+
+# 安全配置：账户锁定
+MAX_LOGIN_ATTEMPTS = 5  # 最大失败次数
+LOCK_DURATION_MINUTES = 15  # 锁定时长（分钟）
+
 
 @router.post("/login", response_model=Token)
 async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
-    """用户登录 (返回带 Tenant 信息的 Token)"""
+    """
+    用户登录（安全增强版）
+    - 账户锁定机制：5次失败锁定15分钟
+    - 用户状态检查：禁用账户无法登录
+    """
+    from app.models.user import UserStatus
+    
     result = await db.execute(select(User).where(User.email == user_data.email))
     user = result.scalar_one_or_none()
     
-    if not user or not verify_password(user_data.password, user.password_hash):
+    # 用户不存在：返回通用错误（防止用户枚举）
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="邮箱或密码错误",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Check User Status (Active?) - 略
+    # 检查账户锁定状态
+    if user.locked_until and user.locked_until > datetime.utcnow():
+        remaining_minutes = int((user.locked_until - datetime.utcnow()).total_seconds() / 60) + 1
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"账户已锁定，请 {remaining_minutes} 分钟后再试"
+        )
     
-    # 更新最后登录时间
+    # 验证密码
+    if not verify_password(user_data.password, user.password_hash):
+        # 增加失败计数
+        user.failed_login_attempts += 1
+        
+        # 达到阈值则锁定账户
+        if user.failed_login_attempts >= MAX_LOGIN_ATTEMPTS:
+            user.locked_until = datetime.utcnow() + timedelta(minutes=LOCK_DURATION_MINUTES)
+            await db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"登录失败次数过多，账户已锁定 {LOCK_DURATION_MINUTES} 分钟"
+            )
+        
+        remaining_attempts = MAX_LOGIN_ATTEMPTS - user.failed_login_attempts
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"邮箱或密码错误，剩余尝试次数：{remaining_attempts}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # 检查用户状态
+    if user.status != UserStatus.ACTIVE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="账户已被禁用，请联系管理员"
+        )
+    
+    # 登录成功：重置失败计数和锁定状态
+    user.failed_login_attempts = 0
+    user.locked_until = None
     user.last_login_at = datetime.utcnow()
     await db.commit()
     

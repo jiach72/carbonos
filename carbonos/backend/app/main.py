@@ -58,6 +58,17 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     logger.info("database_initialized")
     
+    # 初始化超级管理员（系统自带固定账户）
+    from app.core.init_superuser import init_superuser
+    from app.core.database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as db:
+        try:
+            superuser = await init_superuser(db)
+            logger.info("superuser_initialized", email=superuser.email)
+        except Exception as e:
+            logger.error("superuser_init_failed", error=str(e))
+    
     # 预热 Redis 连接
     try:
         redis = await get_redis()
@@ -116,9 +127,20 @@ from app.core.middleware.tenant import TenantMiddleware
 app.add_middleware(TenantMiddleware)
 
 # 3. API 限流中间件（P2: 生产环境启用）
-from app.core.middleware.ratelimit import RateLimitMiddleware, RequestLoggingMiddleware
+from app.core.middleware.ratelimit import (
+    RateLimitMiddleware, 
+    RequestLoggingMiddleware,
+    AuthRateLimitMiddleware,
+    SecurityHeadersMiddleware
+)
 
-# 限流：生产环境启用
+# 安全响应头：始终启用
+app.add_middleware(SecurityHeadersMiddleware, enabled=True)
+
+# 认证端点限流：始终启用（5次/15分钟）
+app.add_middleware(AuthRateLimitMiddleware, enabled=True)
+
+# 全局限流：生产环境启用
 app.add_middleware(RateLimitMiddleware, enabled=not settings.debug)
 
 # 4. 请求日志中间件（P1-004: 记录请求日志）

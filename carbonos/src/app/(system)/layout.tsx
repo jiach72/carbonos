@@ -26,7 +26,7 @@ export default function SystemLayout({
                 toast.error("非法访问", {
                     description: "超级管理员请移步管理后台",
                 });
-                router.replace("/admin-login");
+                router.replace("/sys-portal");
             }
         }
     }, [user, loading, router]);

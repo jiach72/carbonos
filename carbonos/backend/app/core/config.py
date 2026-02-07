@@ -20,10 +20,12 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str = "redis://localhost:6379/0"
     
-    # JWT
-    secret_key: str = "your-secret-key-change-in-production"
+    # JWT（安全强化：移除不安全默认值）
+    secret_key: str  # 必须从 .env 配置，无默认值
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+    jwt_issuer: str = "carbonos"
+    jwt_audience: str = "carbonos-api"
     
     # AI 配置
     ai_provider: str = "qwen"

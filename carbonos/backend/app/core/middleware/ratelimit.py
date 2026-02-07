@@ -227,3 +227,104 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 duration_ms=round(duration_ms, 2),
             )
             raise
+
+
+class AuthRateLimitMiddleware(BaseHTTPMiddleware):
+    """
+    认证端点专用限流中间件
+    安全增强：防止暴力破解攻击
+    
+    策略：
+    - 登录/注册端点：5 请求/15分钟 (按 IP)
+    """
+    
+    AUTH_LIMIT = 5  # 认证端点每15分钟请求数
+    AUTH_WINDOW = 15 * 60  # 15分钟窗口
+    
+    # 需要严格限流的认证路径
+    AUTH_PATHS = [
+        "/api/v1/auth/login",
+        "/api/v1/auth/register",
+    ]
+    
+    def __init__(self, app: ASGIApp, enabled: bool = True):
+        super().__init__(app)
+        self.enabled = enabled
+    
+    def _is_auth_path(self, path: str) -> bool:
+        """检查是否是认证路径"""
+        return any(path.startswith(p) for p in self.AUTH_PATHS)
+    
+    def _get_client_ip(self, request: Request) -> str:
+        """获取客户端 IP"""
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+        return request.client.host if request.client else "unknown"
+    
+    async def dispatch(self, request: Request, call_next):
+        # 仅对认证端点生效
+        if not self.enabled or not self._is_auth_path(request.url.path):
+            return await call_next(request)
+        
+        client_ip = self._get_client_ip(request)
+        key = f"ratelimit:auth:{client_ip}"
+        
+        try:
+            redis = await get_redis()
+            current = await redis.get(key)
+            
+            if current is None:
+                await redis.setex(key, self.AUTH_WINDOW, 1)
+            else:
+                count = int(current)
+                if count >= self.AUTH_LIMIT:
+                    ttl = await redis.ttl(key)
+                    logger.warning(
+                        "auth_rate_limit_exceeded",
+                        client_ip=client_ip,
+                        path=request.url.path
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail=f"登录尝试次数过多，请 {int(ttl / 60) + 1} 分钟后再试",
+                        headers={
+                            "Retry-After": str(ttl),
+                        }
+                    )
+                await redis.incr(key)
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning("auth_rate_limit_error", error=str(e))
+        
+        return await call_next(request)
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """
+    安全响应头中间件
+    添加标准安全头以防止常见攻击
+    """
+    
+    def __init__(self, app: ASGIApp, enabled: bool = True):
+        super().__init__(app)
+        self.enabled = enabled
+    
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        
+        if self.enabled:
+            # 防止 MIME 类型嗅探
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            # 防止点击劫持
+            response.headers["X-Frame-Options"] = "DENY"
+            # XSS 保护（旧浏览器）
+            response.headers["X-XSS-Protection"] = "1; mode=block"
+            # 强制 HTTPS（生产环境）
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+            # 禁止 IE 兼容模式
+            response.headers["X-UA-Compatible"] = "IE=edge"
+        
+        return response
+

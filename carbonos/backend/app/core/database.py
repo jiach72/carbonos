@@ -8,6 +8,9 @@ settings = get_settings()
 engine = create_async_engine(settings.database_url, echo=True)
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
+# 别名，用于 main.py 中的超级管理员初始化
+AsyncSessionLocal = async_session_maker
+
 
 class Base(DeclarativeBase):
     """SQLAlchemy 基类"""

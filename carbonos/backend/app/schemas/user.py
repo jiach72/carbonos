@@ -4,7 +4,8 @@
 
 import uuid
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+import re
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class UserBase(BaseModel):
@@ -15,8 +16,20 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    """创建用户请求"""
-    password: str
+    """创建用户请求（含密码强度验证）"""
+    password: str = Field(..., min_length=8, max_length=128, description="密码需8-128字符")
+    
+    @field_validator('password')
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        """密码强度验证：大小写+数字"""
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('密码必须包含至少一个大写字母')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('密码必须包含至少一个小写字母')
+        if not re.search(r'[0-9]', v):
+            raise ValueError('密码必须包含至少一个数字')
+        return v
 
 
 class UserLogin(BaseModel):

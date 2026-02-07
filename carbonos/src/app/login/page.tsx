@@ -49,13 +49,13 @@ export default function LoginPage() {
             if (isLogin) { // 登录成功
                 // 检查是否为超级管理员 (无租户ID且角色为admin)
                 if (data.role === 'admin' && !data.tenant_id) {
-                    // @ts-ignore
-                    toast.error("超级管理员请使用专用入口", {
-                        description: "正在跳转至管理后台登录页...",
+                    localStorage.setItem("access_token", data.access_token);
+                    toast.success("欢迎回来，超级管理员", {
+                        description: "正在进入管理后台...",
                     });
                     setTimeout(() => {
-                        window.location.href = "/admin-login";
-                    }, 1500);
+                        window.location.href = "/admin";
+                    }, 500);
                     return;
                 }
 

@@ -85,13 +85,46 @@ export default function AdminSettingsPage() {
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!formData.currentPassword || !formData.newPassword) {
+            toast.error("请输入当前密码和新密码");
+            return;
+        }
+
+        if (formData.newPassword !== formData.confirmPassword) {
+            toast.error("两次输入的密码不一致");
+            return;
+        }
+
         setIsLoading(true);
 
-        // 模拟 API 调用
-        setTimeout(() => {
+        try {
+            const token = localStorage.getItem("access_token");
+            const response = await fetch("/api/v1/auth/reset-password", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    old_password: formData.currentPassword,
+                    new_password: formData.newPassword
+                })
+            });
+
+            if (response.ok) {
+                toast.success("密码修改成功");
+                // Clear fields
+                setFormData(prev => ({ ...prev, currentPassword: "", newPassword: "", confirmPassword: "" }));
+            } else {
+                const data = await response.json();
+                toast.error(data.detail || "修改失败，请检查旧密码是否正确");
+            }
+        } catch (error) {
+            toast.error("网络错误");
+        } finally {
             setIsLoading(false);
-            toast.success("个人信息已更新");
-        }, 1000);
+        }
     };
 
     const handleSaveAiConfig = async () => {
@@ -150,6 +183,8 @@ export default function AdminSettingsPage() {
                                 <Label className="text-slate-300">当前密码</Label>
                                 <Input
                                     type="password"
+                                    value={formData.currentPassword}
+                                    onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
                                     className="bg-slate-800 border-slate-700 text-white"
                                     placeholder="输入当前密码以验证"
                                 />
@@ -159,6 +194,8 @@ export default function AdminSettingsPage() {
                                     <Label className="text-slate-300">新密码</Label>
                                     <Input
                                         type="password"
+                                        value={formData.newPassword}
+                                        onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                                         className="bg-slate-800 border-slate-700 text-white"
                                     />
                                 </div>
@@ -166,6 +203,8 @@ export default function AdminSettingsPage() {
                                     <Label className="text-slate-300">确认新密码</Label>
                                     <Input
                                         type="password"
+                                        value={formData.confirmPassword}
+                                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                         className="bg-slate-800 border-slate-700 text-white"
                                     />
                                 </div>

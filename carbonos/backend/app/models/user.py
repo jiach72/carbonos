@@ -4,7 +4,7 @@
 
 import uuid
 from datetime import datetime
-from sqlalchemy import String, DateTime, Enum as SQLEnum, ForeignKey, Boolean
+from sqlalchemy import String, DateTime, Enum as SQLEnum, ForeignKey, Boolean, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 import enum
@@ -69,6 +69,10 @@ class User(Base):
     
     # 超级管理员标识（P0-003: 替代脆弱的 tenant_id==null 判断）
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    
+    # 安全增强：账户锁定机制
+    failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     # Relationship
     tenant: Mapped["Tenant"] = relationship(back_populates="users", foreign_keys=[tenant_id])
