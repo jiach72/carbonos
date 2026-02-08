@@ -68,7 +68,7 @@ async def register(data: TenantCreateRequest, db: AsyncSession = Depends(get_db)
         tenant = Tenant(
             name=data.company_name,
             code=tenant_code,
-            plan=TenantPlan.FREE
+            plan=TenantPlan.ESSENTIAL
         )
         db.add(tenant)
         await db.flush() # 获取 tenant.id

@@ -53,14 +53,14 @@ DEMO_TENANTS = [
     {
         "name": "吴中生物医药港",
         "code": "bio_port",
-        "plan": TenantPlan.FREE,
+        "plan": TenantPlan.ESSENTIAL,
         "admin_email": "contact@bio-port.com",
         "contact_email": "contact@bio-port.com",
     },
     {
         "name": "相城数字经济产业园",
         "code": "xc_digital",
-        "plan": TenantPlan.FREE,
+        "plan": TenantPlan.ESSENTIAL,
         "admin_email": "info@xc-digital.com",
         "contact_email": "info@xc-digital.com",
     },

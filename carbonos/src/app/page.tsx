@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap, Globe, Cpu, Coins, ShieldCheck, Activity, Server, Users } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { ROICalculator } from "@/components/calculator/ROICalculator";
 
 export default function CorporateHomePage() {
   return (
@@ -39,14 +40,14 @@ export default function CorporateHomePage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4 sm:px-0">
-              <Link href="/solutions/zero-carbon-park">
-                <Button size="lg" className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/25">
-                  探索零碳业务 <ArrowRight className="ml-2 w-5 h-5" />
+              <Link href="/diagnosis">
+                <Button size="lg" className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg bg-emerald-600 hover:bg-emerald-500 text-white rounded-full shadow-lg shadow-emerald-500/25">
+                  免费诊断您的零碳就绪度 <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link href="/ai-computing">
+              <Link href="/solutions/zero-carbon-park">
                 <Button size="lg" variant="outline" className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg border-slate-700 text-slate-300 bg-transparent hover:text-white hover:bg-slate-800 rounded-full backdrop-blur-sm">
-                  了解 AI 算力
+                  探索零碳业务
                 </Button>
               </Link>
             </div>
@@ -72,6 +73,9 @@ export default function CorporateHomePage() {
             </div>
           </div>
         </section>
+
+        {/* === ROI Calculator === */}
+        <ROICalculator />
 
         {/* === Business Matrix (Quad) === */}
         <section className="py-16 sm:py-24 bg-slate-900">

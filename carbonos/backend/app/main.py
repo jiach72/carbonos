@@ -24,6 +24,7 @@ from app.api.simulation import router as simulation_router
 from app.api.pcf import router as pcf_router
 from app.api.admin import router as admin_router
 from app.api.ai import router as ai_diagnostic_router
+from app.api.survey import router as survey_router
 from app.core.database import engine, Base
 from app.core.config import get_settings
 
@@ -34,6 +35,7 @@ from app.models.organization import Organization
 from app.models.carbon import CarbonEmission, CarbonInventory
 from app.models.audit import AuditLog  # P2: 审计日志
 from app.models.tenant_config import TenantConfig  # P2: 租户配置
+from app.models.survey import Survey  # 调研问卷
 
 
 # 应用生命周期管理
@@ -162,6 +164,7 @@ app.include_router(dashboard_router, prefix="/api/v1")
 app.include_router(simulation_router, prefix="/api/v1")
 app.include_router(pcf_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
+app.include_router(survey_router, prefix="/api/v1")
 
 
 # ============ 健康检查 ============

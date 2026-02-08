@@ -36,7 +36,7 @@ MOCK_TENANTS = [
     {
         "name": "吴中生物医药港",
         "code": "wuzhong_bio",
-        "plan": TenantPlan.FREE,
+        "plan": TenantPlan.ESSENTIAL,
         "email": "contact@bio-port.com"
     },
     {
@@ -48,7 +48,7 @@ MOCK_TENANTS = [
     {
         "name": "相城数字经济产业园",
         "code": "xiangcheng_digital",
-        "plan": TenantPlan.FREE,
+        "plan": TenantPlan.ESSENTIAL,
         "email": "info@xc-digital.com"
     }
 ]

@@ -18,9 +18,11 @@ class TenantStatus(str, enum.Enum):
     PENDING = "pending"     # 待审核
 
 class TenantPlan(str, enum.Enum):
-    FREE = "free"           # 免费版
-    PRO = "pro"             # 专业版
-    ENTERPRISE = "enterprise" # 旗舰版
+    """租户订阅版本 (对应 PRD v1.3 SaaS 定价)"""
+    ESSENTIAL = "essential"     # 启航版 (¥9,800/年)
+    PRO = "pro"                 # 专业版 (¥49,800/年)
+    ENTERPRISE = "enterprise"   # 旗舰版 (¥200,000+/年)
+    CUSTOM = "custom"           # 定制版 (Gov Tech 等)
 
 class Tenant(Base):
     """租户表 (SaaS 顶层单位)"""
@@ -35,7 +37,7 @@ class Tenant(Base):
     code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True) # 租户代码 (e.g. suzhou_park)
     
     domain: Mapped[str | None] = mapped_column(String(255)) # 专属域名
-    plan: Mapped[TenantPlan] = mapped_column(SQLEnum(TenantPlan), default=TenantPlan.FREE)
+    plan: Mapped[TenantPlan] = mapped_column(SQLEnum(TenantPlan), default=TenantPlan.ESSENTIAL)
     status: Mapped[TenantStatus] = mapped_column(SQLEnum(TenantStatus), default=TenantStatus.ACTIVE)
     
     contact_email: Mapped[str | None] = mapped_column(String(255))
