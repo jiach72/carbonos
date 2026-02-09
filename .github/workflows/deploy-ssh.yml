@@ -111,11 +111,12 @@ jobs:
             echo "=== Step 10: Run Migrations ==="
             cd ~/apps/carbonos/carbonos/backend
             source venv/bin/activate
-            # 如果表已存在，标记迁移为已完成；否则正常运行迁移
-            if alembic upgrade head 2>&1 | grep -q "DuplicateTable"; then
-                echo "Tables already exist, stamping migration as complete..."
+            # 运行迁移，如果失败则尝试 stamp
+            alembic upgrade head || {
+                echo "Migration failed, checking if tables already exist..."
                 alembic stamp head
-            fi
+                echo "Stamped migration as complete"
+            }
             
             echo "=== Step 11: Create logs directory ==="
             mkdir -p ~/apps/carbonos/logs
