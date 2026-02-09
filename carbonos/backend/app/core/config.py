@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # 忽略 .env 中的额外变量（如 GITHUB_REPOSITORY_OWNER）
 
 
 @lru_cache
