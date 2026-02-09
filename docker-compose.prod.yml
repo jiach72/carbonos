@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # 反向代理 - Nginx
   nginx:

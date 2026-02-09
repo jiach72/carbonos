@@ -76,7 +76,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          command_timeout: 30m # Keep long timeout for slow GHCR connection
+          command_timeout: 60m # Increase timeout for slow GHCR connection
           script: |
             cd ~/apps/carbonos
             
