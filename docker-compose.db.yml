@@ -1,0 +1,47 @@
+services:
+  # 数据库 - PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: carbonos
+      POSTGRES_PASSWORD: carbonos
+      POSTGRES_DB: carbonos
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U carbonos" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  # 缓存 - Redis
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: always
+
+  # 时序数据库 - InfluxDB
+  influxdb:
+    image: influxdb:2.7-alpine
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=carbonos
+      - DOCKER_INFLUXDB_INIT_PASSWORD=carbonos
+      - DOCKER_INFLUXDB_INIT_ORG=scdc
+      - DOCKER_INFLUXDB_INIT_BUCKET=energy
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    ports:
+      - "8086:8086"
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:
+  influxdb_data:
