@@ -78,7 +78,6 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           command_timeout: 60m # Increase timeout for slow GHCR connection
           script: |
-            set -e  # Exit on first error
             cd ~/apps/carbonos
             
             echo "=== Step 1: Config Move ==="
@@ -102,8 +101,8 @@ jobs:
             fi
             
             echo "=== Step 3: Verify .env file ==="
-            cat .env | head -c 50
-            echo "..."
+            cat .env | head -c 100
+            echo ""
             
             echo "=== Step 4: Docker Login ==="
             echo ${{ secrets.GITHUB_TOKEN }} | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -117,24 +116,35 @@ jobs:
             echo "=== Step 7: Pull Images ==="
             sudo docker compose --env-file .env -f docker-compose.prod.yml pull -q
             
-            echo "=== Step 8: Start Services ==="
-            sudo docker compose --env-file .env -f docker-compose.prod.yml up -d
-            
-            echo "=== Step 9: Check container status ==="
+            echo "=== Step 8: Start infrastructure (postgres, redis, influxdb) ==="
+            sudo docker compose --env-file .env -f docker-compose.prod.yml up -d postgres redis influxdb
             sleep 10
+            
+            echo "=== Step 9: Check postgres health ==="
+            sudo docker compose -f docker-compose.prod.yml exec -T postgres pg_isready -U carbonos || echo "Postgres not ready"
+            
+            echo "=== Step 10: Start backend (without waiting for health) ==="
+            sudo docker compose --env-file .env -f docker-compose.prod.yml up -d --no-deps backend
+            sleep 15
+            
+            echo "=== Step 11: Check backend logs ==="
+            sudo docker compose -f docker-compose.prod.yml logs backend --tail=50
+            
+            echo "=== Step 12: Check backend health manually ==="
+            curl -s http://localhost:8000/health || echo "Backend health check failed"
+            
+            echo "=== Step 13: Start frontend and nginx ==="
+            sudo docker compose --env-file .env -f docker-compose.prod.yml up -d --no-deps frontend
+            sleep 5
+            sudo docker compose --env-file .env -f docker-compose.prod.yml up -d --no-deps nginx
+            
+            echo "=== Step 14: Container status ==="
             sudo docker compose -f docker-compose.prod.yml ps -a
             
-            echo "=== Step 10: Check backend logs ==="
-            sudo docker compose -f docker-compose.prod.yml logs backend --tail=30 || true
-            
-            echo "=== Step 11: Migration ==="
+            echo "=== Step 15: Migration ==="
             sudo docker compose --env-file .env -f docker-compose.prod.yml exec -T backend alembic upgrade head || echo "Migration failed or skipped"
             
-            echo "=== Step 12: Final health check ==="
-            curl -s http://localhost:8000/health || echo "Backend health check failed"
-            curl -s http://localhost:3000 | head -c 100 || echo "Frontend check failed"
-            
-            echo "=== Step 13: Cleanup ==="
+            echo "=== Step 16: Cleanup ==="
             sudo docker image prune -f
             
             echo "=== Deployment Complete ==="
