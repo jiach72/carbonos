@@ -111,11 +111,32 @@ jobs:
             echo "=== Step 10: Run Migrations ==="
             cd ~/apps/carbonos/carbonos/backend
             source venv/bin/activate
-            # 运行迁移，如果失败则尝试 stamp
+            # 运行迁移，如果失败则尝试 stamp 并手动添加缺失列
             alembic upgrade head || {
-                echo "Migration failed, checking if tables already exist..."
-                alembic stamp head
-                echo "Stamped migration as complete"
+                echo "Migration failed, stamping and adding missing columns manually..."
+                alembic stamp head 2>/dev/null || true
+                
+                # 直接用 psql 添加缺失的列（幂等操作）
+                echo "Adding missing columns via psql..."
+                sudo docker exec carbonos-postgres-1 psql -U carbonos -d carbonos -c "
+                    DO \$\$ BEGIN
+                        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'failed_login_attempts') THEN
+                            ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER NOT NULL DEFAULT 0;
+                            RAISE NOTICE 'Added failed_login_attempts column';
+                        END IF;
+                    END \$\$;
+                " || echo "Warning: failed_login_attempts column might already exist"
+                
+                sudo docker exec carbonos-postgres-1 psql -U carbonos -d carbonos -c "
+                    DO \$\$ BEGIN
+                        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'locked_until') THEN
+                            ALTER TABLE users ADD COLUMN locked_until TIMESTAMP;
+                            RAISE NOTICE 'Added locked_until column';
+                        END IF;
+                    END \$\$;
+                " || echo "Warning: locked_until column might already exist"
+                
+                echo "Missing columns added successfully"
             }
             
             echo "=== Step 11: Create logs directory ==="
