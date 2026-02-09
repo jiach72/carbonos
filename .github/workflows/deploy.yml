@@ -86,22 +86,31 @@ jobs:
                 rm -rf nginx
             fi
             
-            # 2. Docker Login (Required for private GHCR)
+            # 2. Generate Secrets
+            if [ ! -f .env ]; then
+                echo "SECRET_KEY=$(openssl rand -hex 32)" > .env
+            else
+                if ! grep -q "SECRET_KEY" .env; then
+                    echo "SECRET_KEY=$(openssl rand -hex 32)" >> .env
+                fi
+            fi
+
+            # 3. Docker Login (Required for private GHCR)
             echo ${{ secrets.GITHUB_TOKEN }} | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # 3. Replace namespace variable
+            # 4. Replace namespace variable
             sed -i 's/${GITHUB_REPOSITORY_OWNER}/${{ github.repository_owner }}/g' docker-compose.prod.yml
             
-            # 4. Pull Images (Incremental update)
+            # 5. Pull Images (Incremental update)
             # Using -q to prevent log buffer overflow
             sudo docker compose -f docker-compose.prod.yml pull -q
             
-            # 5. Start Services
+            # 6. Start Services
             sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
             
-            # 6. Migration
+            # 7. Migration
             sleep 10
             sudo docker compose -f docker-compose.prod.yml exec -T backend alembic upgrade head
             
-            # 7. Cleanup
+            # 8. Cleanup
             sudo docker image prune -f
