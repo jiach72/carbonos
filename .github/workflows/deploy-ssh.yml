@@ -96,33 +96,46 @@ jobs:
             npm install
             npm run build
             
-            echo "=== Step 8: Start/Restart Database Services ==="
+            echo "=== Step 8: Stop Orphan Docker Containers ==="
             cd ~/apps/carbonos
+            # 停止可能占用端口80的旧容器
+            sudo docker compose -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+            sudo docker stop carbonos-nginx-1 carbonos-frontend-1 carbonos-backend-1 2>/dev/null || true
+            sudo docker rm carbonos-nginx-1 carbonos-frontend-1 carbonos-backend-1 2>/dev/null || true
+            
+            echo "=== Step 9: Start Database Services Only ==="
             # 只启动数据库相关的 Docker 容器
-            sudo docker compose -f docker-compose.db.yml up -d
+            sudo docker compose -f docker-compose.db.yml up -d --remove-orphans
             sleep 5
             
-            echo "=== Step 9: Run Migrations ==="
+            echo "=== Step 10: Run Migrations ==="
             cd ~/apps/carbonos/carbonos/backend
             source venv/bin/activate
-            alembic upgrade head || echo "Migration failed or skipped"
+            # 如果表已存在，标记迁移为已完成；否则正常运行迁移
+            if alembic upgrade head 2>&1 | grep -q "DuplicateTable"; then
+                echo "Tables already exist, stamping migration as complete..."
+                alembic stamp head
+            fi
             
-            echo "=== Step 10: Create logs directory ==="
+            echo "=== Step 11: Create logs directory ==="
             mkdir -p ~/apps/carbonos/logs
+            mkdir -p ~/apps/carbonos/carbonos/backend/logs
             
-            echo "=== Step 11: Start/Restart App with PM2 ==="
+            echo "=== Step 12: Start/Restart App with PM2 ==="
             cd ~/apps/carbonos
-            pm2 delete all || true
+            pm2 delete all 2>/dev/null || true
             pm2 start ecosystem.config.js
             pm2 save
             
-            echo "=== Step 12: Start Nginx ==="
+            echo "=== Step 13: Start Nginx ==="
             sudo cp nginx/nginx-ssh.conf /etc/nginx/sites-available/carbonos
             sudo ln -sf /etc/nginx/sites-available/carbonos /etc/nginx/sites-enabled/carbonos
             sudo rm -f /etc/nginx/sites-enabled/default
-            sudo nginx -t && sudo systemctl start nginx || sudo systemctl reload nginx
+            # 确保 nginx 能正常启动
+            sudo fuser -k 80/tcp 2>/dev/null || true
+            sudo nginx -t && (sudo systemctl start nginx 2>/dev/null || sudo systemctl reload nginx)
             
-            echo "=== Step 13: Health Check ==="
+            echo "=== Step 14: Health Check ==="
             sleep 5
             curl -s http://localhost:8000/health || echo "Backend health check failed"
             curl -s http://localhost:3000 | head -c 100 || echo "Frontend check failed"
