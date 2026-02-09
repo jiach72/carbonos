@@ -111,33 +111,36 @@ jobs:
             echo "=== Step 10: Run Migrations ==="
             cd ~/apps/carbonos/carbonos/backend
             source venv/bin/activate
-            # 运行迁移，如果失败则尝试 stamp 并手动添加缺失列
+            # 运行迁移
             alembic upgrade head || {
-                echo "Migration failed, stamping and adding missing columns manually..."
+                echo "Migration failed, stamping..."
                 alembic stamp head 2>/dev/null || true
-                
-                # 直接用 psql 添加缺失的列（幂等操作）
-                echo "Adding missing columns via psql..."
-                sudo docker exec carbonos-postgres-1 psql -U carbonos -d carbonos -c "
-                    DO \$\$ BEGIN
-                        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'failed_login_attempts') THEN
-                            ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER NOT NULL DEFAULT 0;
-                            RAISE NOTICE 'Added failed_login_attempts column';
-                        END IF;
-                    END \$\$;
-                " || echo "Warning: failed_login_attempts column might already exist"
-                
-                sudo docker exec carbonos-postgres-1 psql -U carbonos -d carbonos -c "
-                    DO \$\$ BEGIN
-                        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'locked_until') THEN
-                            ALTER TABLE users ADD COLUMN locked_until TIMESTAMP;
-                            RAISE NOTICE 'Added locked_until column';
-                        END IF;
-                    END \$\$;
-                " || echo "Warning: locked_until column might already exist"
-                
-                echo "Missing columns added successfully"
             }
+            
+            # 无论迁移是否成功，都确保缺失的列存在（幂等操作）
+            echo "=== Step 10b: Ensure Required Columns Exist ==="
+            sudo docker exec carbonos-postgres-1 psql -U carbonos -d carbonos -c "
+                DO \$\$ BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'failed_login_attempts') THEN
+                        ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER NOT NULL DEFAULT 0;
+                        RAISE NOTICE 'Added failed_login_attempts column';
+                    ELSE
+                        RAISE NOTICE 'failed_login_attempts column already exists';
+                    END IF;
+                END \$\$;
+            "
+            
+            sudo docker exec carbonos-postgres-1 psql -U carbonos -d carbonos -c "
+                DO \$\$ BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'locked_until') THEN
+                        ALTER TABLE users ADD COLUMN locked_until TIMESTAMP;
+                        RAISE NOTICE 'Added locked_until column';
+                    ELSE
+                        RAISE NOTICE 'locked_until column already exists';
+                    END IF;
+                END \$\$;
+            "
+            echo "Required columns verified"
             
             echo "=== Step 11: Create logs directory ==="
             mkdir -p ~/apps/carbonos/logs
