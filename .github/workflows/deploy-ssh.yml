@@ -25,16 +25,16 @@ jobs:
             mkdir -p ~/apps
             cd ~/apps
             
-            # Clone or update repository
+            # Clone or update repository (use shallow clone for speed)
             if [ ! -d "carbonos/.git" ]; then
-                echo "Cloning repository..."
+                echo "Cloning repository (shallow)..."
                 rm -rf carbonos
-                git clone https://github.com/${{ github.repository }}.git carbonos
+                git clone --depth 1 https://github.com/${{ github.repository }}.git carbonos
             fi
             cd carbonos
             
             echo "=== Step 1: Update Code ==="
-            git fetch origin main
+            git fetch --depth 1 origin main
             git reset --hard origin/main
             
             echo "=== Step 2: Check/Install Python 3.11 ==="
