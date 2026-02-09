@@ -24,17 +24,71 @@ def upgrade() -> None:
     """创建完整数据库架构"""
     
     # ================== 创建 ENUM 类型 ==================
-    # 使用 op.execute 显式创建，避免 SQLAlchemy 缓存问题
+    # PostgreSQL 不支持 CREATE TYPE IF NOT EXISTS，使用 DO 块检查是否存在
     
-    op.execute("CREATE TYPE IF NOT EXISTS tenantstatus AS ENUM ('active', 'suspended', 'pending')")
-    op.execute("CREATE TYPE IF NOT EXISTS tenantplan AS ENUM ('free', 'pro', 'enterprise')")
-    op.execute("CREATE TYPE IF NOT EXISTS userrole AS ENUM ('ADMIN', 'MANAGER', 'USER', 'VIEWER')")
-    op.execute("CREATE TYPE IF NOT EXISTS userstatus AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED')")
-    op.execute("CREATE TYPE IF NOT EXISTS organizationtype AS ENUM ('park', 'enterprise', 'workshop')")
-    op.execute("CREATE TYPE IF NOT EXISTS energytype AS ENUM ('electricity', 'natural_gas', 'coal', 'diesel', 'gasoline', 'steam', 'heat', 'water')")
-    op.execute("CREATE TYPE IF NOT EXISTS datasource AS ENUM ('manual', 'excel', 'api', 'iot')")
-    op.execute("CREATE TYPE IF NOT EXISTS emissionscope AS ENUM ('scope_1', 'scope_2', 'scope_3')")
-    op.execute("CREATE TYPE IF NOT EXISTS auditaction AS ENUM ('create', 'read', 'update', 'delete', 'login', 'logout', 'export', 'import', 'admin_action')")
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tenantstatus') THEN
+                CREATE TYPE tenantstatus AS ENUM ('active', 'suspended', 'pending');
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tenantplan') THEN
+                CREATE TYPE tenantplan AS ENUM ('free', 'pro', 'enterprise');
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'userrole') THEN
+                CREATE TYPE userrole AS ENUM ('ADMIN', 'MANAGER', 'USER', 'VIEWER');
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'userstatus') THEN
+                CREATE TYPE userstatus AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED');
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'organizationtype') THEN
+                CREATE TYPE organizationtype AS ENUM ('park', 'enterprise', 'workshop');
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'energytype') THEN
+                CREATE TYPE energytype AS ENUM ('electricity', 'natural_gas', 'coal', 'diesel', 'gasoline', 'steam', 'heat', 'water');
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'datasource') THEN
+                CREATE TYPE datasource AS ENUM ('manual', 'excel', 'api', 'iot');
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'emissionscope') THEN
+                CREATE TYPE emissionscope AS ENUM ('scope_1', 'scope_2', 'scope_3');
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'auditaction') THEN
+                CREATE TYPE auditaction AS ENUM ('create', 'read', 'update', 'delete', 'login', 'logout', 'export', 'import', 'admin_action');
+            END IF;
+        END $$;
+    """)
     
     # 定义 ENUM 类型引用（用于表创建，不再创建类型）
     tenant_status_enum = postgresql.ENUM('active', 'suspended', 'pending', name='tenantstatus', create_type=False)
@@ -75,6 +129,8 @@ def upgrade() -> None:
         sa.Column('role', user_role_enum, nullable=False, server_default='USER'),
         sa.Column('status', user_status_enum, nullable=False, server_default='ACTIVE'),
         sa.Column('is_superuser', sa.Boolean(), nullable=False, server_default='false'),
+        sa.Column('failed_login_attempts', sa.Integer(), nullable=False, server_default='0'),
+        sa.Column('locked_until', sa.DateTime(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column('last_login_at', sa.DateTime(), nullable=True),

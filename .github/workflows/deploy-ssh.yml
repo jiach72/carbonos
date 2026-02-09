@@ -116,11 +116,11 @@ jobs:
             pm2 start ecosystem.config.js
             pm2 save
             
-            echo "=== Step 12: Reload Nginx ==="
+            echo "=== Step 12: Start Nginx ==="
             sudo cp nginx/nginx-ssh.conf /etc/nginx/sites-available/carbonos
             sudo ln -sf /etc/nginx/sites-available/carbonos /etc/nginx/sites-enabled/carbonos
             sudo rm -f /etc/nginx/sites-enabled/default
-            sudo nginx -t && sudo systemctl reload nginx
+            sudo nginx -t && sudo systemctl start nginx || sudo systemctl reload nginx
             
             echo "=== Step 13: Health Check ==="
             sleep 5
