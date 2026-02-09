@@ -20,6 +20,7 @@ export function SiteHeader() {
     const navItems = [
         { href: "/solutions/zero-carbon-park", label: "零碳园区", icon: Leaf, highlight: true },
         { href: "/diagnosis", label: "免费诊断", highlight: true },
+        { href: "/pricing", label: "产品定价" },
         { href: "/core-tech", label: "核心技术" },
         { href: "/energy-solutions", label: "能源解决方案" },
         { href: "/ai-computing", label: "AI 算力" },

@@ -1,9 +1,146 @@
 "use client";
 
-import { BarChart3, Leaf, Globe, Sun, Network, Battery, Building2, TrendingDown, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { BarChart3, Leaf, Globe, Sun, Network, Battery, Building2, TrendingDown, CheckCircle2, Calculator, ArrowRight, MousePointer2 } from "lucide-react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { Button } from "@/components/ui/button";
+import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
+import { Slider } from "@/components/ui/slider";
+
+// --- Components ---
+
+function SolutionCard({ icon: Icon, title, desc, color, bg, borderColor }: any) {
+    const x = useMotionValue(0);
+    const y = useMotionValue(0);
+
+    const mouseX = useSpring(x, { stiffness: 500, damping: 100 });
+    const mouseY = useSpring(y, { stiffness: 500, damping: 100 });
+
+    function onMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent) {
+        const { left, top } = currentTarget.getBoundingClientRect();
+        x.set(clientX - left);
+        y.set(clientY - top);
+    }
+
+    return (
+        <motion.div
+            className={`relative overflow-hidden rounded-2xl border ${borderColor} ${bg} p-8 group`}
+            onMouseMove={onMouseMove}
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+        >
+            <motion.div
+                className="pointer-events-none absolute -inset-px rounded-xl opacity-0 transition duration-300 group-hover:opacity-100"
+                style={{
+                    background: useTransform(
+                        [mouseX, mouseY],
+                        ([newX, newY]) => `radial-gradient(600px circle at ${newX}px ${newY}px, rgba(255,255,255,0.1), transparent 40%)`
+                    ),
+                }}
+            />
+            <div className={`mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-slate-950/50 ${color} ring-1 ring-white/10`}>
+                <Icon className="h-7 w-7" />
+            </div>
+            <h3 className="mb-3 text-xl font-bold text-white">{title}</h3>
+            <p className="text-slate-400 leading-relaxed text-sm">{desc}</p>
+        </motion.div>
+    );
+}
+
+function ROISimulator() {
+    const [area, setArea] = useState(50); // 1000m2
+    const [elec, setElec] = useState(100); // 10000kWh
+
+    // Simple simulation logic
+    const carbonReduction = Math.round(elec * 0.5703 / 1000 * 0.3 * 10) / 10; // 30% reduction
+    const costSavings = Math.round(elec * 100 * 0.8 * 0.15); // Energy saving cost
+
+    return (
+        <div className="bg-slate-900/50 border border-emerald-500/20 rounded-3xl p-8 backdrop-blur-sm">
+            <div className="flex items-center gap-3 mb-8">
+                <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400">
+                    <Calculator className="w-6 h-6" />
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-white">零碳收益模拟器</h3>
+                    <p className="text-sm text-slate-400">只需拖动滑块，预估您的园区节能潜力</p>
+                </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-12">
+                <div className="space-y-8">
+                    {/* Sliders */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-300">园区面积 (万㎡)</span>
+                            <span className="text-emerald-400 font-mono">{area} 万㎡</span>
+                        </div>
+                        <Slider
+                            value={[area]}
+                            onValueChange={(v) => setArea(v[0])}
+                            max={500}
+                            step={1}
+                            className="py-2"
+                        />
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-300">年用电量 (万度)</span>
+                            <span className="text-blue-400 font-mono">{elec} 万度</span>
+                        </div>
+                        <Slider
+                            value={[elec]}
+                            onValueChange={(v) => setElec(v[0])}
+                            max={1000}
+                            step={10}
+                            className="py-2"
+                        />
+                    </div>
+
+                    <div className="pt-4 flex gap-4 text-xs text-slate-500">
+                        <span className="flex items-center gap-1"><MousePointer2 className="w-3 h-3" /> 拖动滑块查看变化</span>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    {/* Results */}
+                    <motion.div
+                        className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 flex flex-col justify-center text-center"
+                        key={carbonReduction}
+                        initial={{ scale: 0.95, opacity: 0.5 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                    >
+                        <div className="text-sm text-emerald-300 mb-2">预计年减碳</div>
+                        <div className="text-3xl font-bold text-white mb-1">{carbonReduction}<span className="text-sm font-normal text-slate-400 ml-1">吨</span></div>
+                        <div className="text-xs text-slate-500">相当于植树 {Math.round(carbonReduction * 50)} 棵</div>
+                    </motion.div>
+
+                    <motion.div
+                        className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 flex flex-col justify-center text-center"
+                        key={costSavings}
+                        initial={{ scale: 0.95, opacity: 0.5 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                    >
+                        <div className="text-sm text-blue-300 mb-2">预计年节支</div>
+                        <div className="text-3xl font-bold text-white mb-1">{costSavings > 10000 ? (costSavings / 10000).toFixed(1) + 'w' : costSavings}<span className="text-sm font-normal text-slate-400 ml-1">元</span></div>
+                        <div className="text-xs text-slate-500">基于综合能源管理</div>
+                    </motion.div>
+                </div>
+            </div>
+
+            <div className="mt-8 text-center">
+                <Button className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-full px-8">
+                    获取详细诊断报告 <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+
+
 
 export default function ZeroCarbonParkPage() {
     return (
@@ -21,42 +158,63 @@ export default function ZeroCarbonParkPage() {
                     </div>
 
                     <div className="container mx-auto px-6 relative z-10 text-center">
-                        <div className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-2 text-sm font-medium text-emerald-400 backdrop-blur-md mb-8 ring-1 ring-white/10 shadow-lg shadow-emerald-500/10">
-                            <span className="flex h-2 w-2 rounded-full bg-emerald-400 mr-2.5 animate-pulse"></span>
-                            CarbonOS™ v1.0 SaaS 现已上线
-                        </div>
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                        >
+                            <div className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-2 text-sm font-medium text-emerald-400 backdrop-blur-md mb-8 ring-1 ring-white/10 shadow-lg shadow-emerald-500/10 hover:bg-emerald-500/20 transition-colors cursor-pointer">
+                                <span className="flex h-2 w-2 rounded-full bg-emerald-400 mr-2.5 animate-pulse"></span>
+                                CarbonOS™ v1.0 SaaS 现已上线
+                            </div>
 
-                        <h1 className="mx-auto max-w-4xl text-5xl font-extrabold tracking-tight sm:text-7xl mb-8 leading-[1.1]">
-                            <span className="block text-slate-200 mb-2">零碳园区解决方案</span>
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-blue-400">
-                                CarbonOS™ 智能中枢
-                            </span>
-                        </h1>
+                            <h1 className="mx-auto max-w-4xl text-5xl font-extrabold tracking-tight sm:text-7xl mb-8 leading-[1.1]">
+                                <span className="block text-slate-200 mb-2">零碳园区解决方案</span>
+                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-blue-400">
+                                    CarbonOS™ 智能中枢
+                                </span>
+                            </h1>
 
-                        <p className="mx-auto max-w-2xl text-lg text-slate-400 leading-relaxed mb-6">
-                            从顶层规划、硬件建设到数字化运营，一站式零碳转型服务。
-                        </p>
-                        <p className="mx-auto max-w-2xl text-base text-slate-500 leading-relaxed">
-                            集成源网荷储、碳核算与合规报告，助力园区跨越碳关税壁垒，抢占绿色发展先机。
-                        </p>
+                            <p className="mx-auto max-w-2xl text-lg text-slate-400 leading-relaxed mb-6">
+                                从顶层规划、硬件建设到数字化运营，一站式零碳转型服务。
+                            </p>
+                            <p className="mx-auto max-w-2xl text-base text-slate-500 leading-relaxed">
+                                集成源网荷储、碳核算与合规报告，助力园区跨越碳关税壁垒，抢占绿色发展先机。
+                            </p>
+                        </motion.div>
 
                         {/* 数据亮点 */}
-                        <div className="flex flex-wrap items-center justify-center gap-8 mt-14">
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-white">50+</div>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.4, duration: 0.8 }}
+                            className="flex flex-wrap items-center justify-center gap-8 mt-14"
+                        >
+                            <div className="text-center group cursor-default">
+                                <div className="text-3xl font-bold text-white group-hover:text-emerald-400 transition-colors">50+</div>
                                 <div className="text-sm text-slate-500">服务园区</div>
                             </div>
                             <div className="w-px h-10 bg-slate-700" />
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-white">500<span className="text-lg text-emerald-400">MWh</span></div>
+                            <div className="text-center group cursor-default">
+                                <div className="text-3xl font-bold text-white group-hover:text-emerald-400 transition-colors">500<span className="text-lg">MWh</span></div>
                                 <div className="text-sm text-slate-500">管理资产</div>
                             </div>
                             <div className="w-px h-10 bg-slate-700" />
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-white">30%</div>
+                            <div className="text-center group cursor-default">
+                                <div className="text-3xl font-bold text-white group-hover:text-emerald-400 transition-colors">30%</div>
                                 <div className="text-sm text-slate-500">平均降碳</div>
                             </div>
-                        </div>
+                        </motion.div>
+
+                        {/* ROI Simulator Preview */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 40 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6, duration: 0.8 }}
+                            className="mt-16 max-w-4xl mx-auto"
+                        >
+                            <ROISimulator />
+                        </motion.div>
                     </div>
                 </section>
 
@@ -226,18 +384,6 @@ export default function ZeroCarbonParkPage() {
             <SiteFooter />
         </div>
     );
-}
-
-function SolutionCard({ icon: Icon, title, desc, color, bg, borderColor }: any) {
-    return (
-        <div className={`p-6 rounded-2xl bg-slate-900/50 border ${borderColor} hover:bg-slate-900 transition-all duration-300`}>
-            <div className={`w-12 h-12 rounded-lg ${bg} flex items-center justify-center mb-4`}>
-                <Icon className={`w-6 h-6 ${color}`} />
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
-        </div>
-    )
 }
 
 function FeatureItem({ title, desc, icon: Icon }: any) {

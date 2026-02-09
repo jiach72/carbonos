@@ -10,7 +10,9 @@ import {
     Settings,
     LogOut,
     ShieldAlert,
-    Menu
+    Menu,
+    FileText,
+    ToggleRight
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -26,6 +28,16 @@ const navItems = [
         title: "租户管理",
         href: "/admin/tenants",
         icon: Users,
+    },
+    {
+        title: "调研管理",
+        href: "/admin/surveys",
+        icon: FileText,
+    },
+    {
+        title: "功能开关",
+        href: "/admin/feature-flags",
+        icon: ToggleRight,
     },
     {
         title: "系统设置",

@@ -143,6 +143,106 @@ export default function DigitalAssetsPage() {
                     </div>
                 </section>
 
+                {/* Green Finance - NEW SECTION */}
+                <section className="py-24 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-950 border-y border-emerald-500/10">
+                    <div className="container mx-auto px-6">
+                        <div className="text-center mb-16 max-w-2xl mx-auto">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/20 text-emerald-400 text-sm font-medium mb-6 rounded-md">
+                                🌱 生态资源变现
+                            </div>
+                            <h2 className="text-3xl font-bold text-white mb-4">绿色金融服务</h2>
+                            <p className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 mb-4">
+                                让碳数据变成真金白银
+                            </p>
+                            <p className="text-slate-400">Turning Carbon Data into Cash Flow</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {/* 绿电/绿证交易 */}
+                            <div className="bg-slate-900/50 border border-emerald-500/20 p-8 rounded-2xl hover:border-emerald-500/40 transition-colors group">
+                                <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6 group-hover:bg-emerald-500/20 transition-colors">
+                                    <Coins className="w-7 h-7 text-emerald-400" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-3">绿电/绿证交易</h3>
+                                <p className="text-slate-400 mb-6">一站式撮合与核销，连接绿电买卖双方</p>
+                                <ul className="space-y-3">
+                                    <li className="flex items-center gap-2 text-sm text-slate-300">
+                                        <ChevronRight className="w-4 h-4 text-emerald-500" />
+                                        绿电采购撮合
+                                    </li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300">
+                                        <ChevronRight className="w-4 h-4 text-emerald-500" />
+                                        绿证交易与核销
+                                    </li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300">
+                                        <ChevronRight className="w-4 h-4 text-emerald-500" />
+                                        平台佣金 1%-3%
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* CCER 开发 */}
+                            <div className="bg-slate-900/50 border border-emerald-500/20 p-8 rounded-2xl hover:border-emerald-500/40 transition-colors group">
+                                <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6 group-hover:bg-emerald-500/20 transition-colors">
+                                    <FileText className="w-7 h-7 text-emerald-400" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-3">CCER 项目开发</h3>
+                                <p className="text-slate-400 mb-6">方法学匹配与项目申报，助力碳资产变现</p>
+                                <ul className="space-y-3">
+                                    <li className="flex items-center gap-2 text-sm text-slate-300">
+                                        <ChevronRight className="w-4 h-4 text-emerald-500" />
+                                        方法学自动匹配
+                                    </li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300">
+                                        <ChevronRight className="w-4 h-4 text-emerald-500" />
+                                        项目申报全流程服务
+                                    </li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300">
+                                        <ChevronRight className="w-4 h-4 text-emerald-500" />
+                                        前期免费，落地分成 30%-50%
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* 绿色信贷辅助 */}
+                            <div className="bg-slate-900/50 border border-emerald-500/20 p-8 rounded-2xl hover:border-emerald-500/40 transition-colors group">
+                                <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6 group-hover:bg-emerald-500/20 transition-colors">
+                                    <BarChart3 className="w-7 h-7 text-emerald-400" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-3">绿色信贷辅助</h3>
+                                <p className="text-slate-400 mb-6">生成银行认可的 ESG/碳信用评估报告</p>
+                                <ul className="space-y-3">
+                                    <li className="flex items-center gap-2 text-sm text-slate-300">
+                                        <ChevronRight className="w-4 h-4 text-emerald-500" />
+                                        建行/兴业银行标准模板
+                                    </li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300">
+                                        <ChevronRight className="w-4 h-4 text-emerald-500" />
+                                        一键生成碳信排查报告
+                                    </li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300">
+                                        <ChevronRight className="w-4 h-4 text-emerald-500" />
+                                        平均获得 6%-8% 利率优惠
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Green Finance CTA */}
+                        <div className="mt-12 text-center">
+                            <div className="inline-flex items-center gap-4 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-6 py-3">
+                                <span className="text-emerald-400 font-medium">💰 累计辅助融资 5,000+ 万元</span>
+                                <Link href="/pricing">
+                                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 rounded-full">
+                                        了解旗舰版
+                                        <ChevronRight className="w-4 h-4 ml-1" />
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 {/* CTA */}
                 <section className="py-24 bg-gradient-to-br from-slate-900 via-slate-950 to-blue-950/20 border-t border-white/5">
                     <div className="container mx-auto px-6 text-center">
