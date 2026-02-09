@@ -31,7 +31,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./carbonos
-          file: ./carbonos/Dockerfile
+          file: ./carbonos/docker/frontend.Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
 
@@ -39,7 +39,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./carbonos/backend
-          file: ./carbonos/backend/Dockerfile
+          file: ./carbonos/docker/backend.Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
 

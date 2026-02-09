@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # 前端 - Next.js
+  frontend:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/carbonos-frontend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=https://carbon.jiach.net/api
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - carbonos-network
+    restart: always
+
+  # 后端 - FastAPI
+  backend:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/carbonos-backend:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://carbonos:carbonos@postgres:5432/carbonos
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - carbonos-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: always
+
+  # 数据库 - PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: carbonos
+      POSTGRES_PASSWORD: carbonos
+      POSTGRES_DB: carbonos
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - carbonos-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U carbonos" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  # 缓存 - Redis
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    networks:
+      - carbonos-network
+    restart: always
+
+  # 时序数据库 - InfluxDB
+  influxdb:
+    image: influxdb:2.7-alpine
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=carbonos
+      - DOCKER_INFLUXDB_INIT_PASSWORD=carbonos
+      - DOCKER_INFLUXDB_INIT_ORG=scdc
+      - DOCKER_INFLUXDB_INIT_BUCKET=energy
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    ports:
+      - "8086:8086"
+    networks:
+      - carbonos-network
+    restart: always
+
+networks:
+  carbonos-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  influxdb_data:
