@@ -78,52 +78,63 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           command_timeout: 60m # Increase timeout for slow GHCR connection
           script: |
+            set -e  # Exit on first error
             cd ~/apps/carbonos
             
-            # 1. Config Move
+            echo "=== Step 1: Config Move ==="
             if [ -f "nginx/nginx.conf" ]; then
                 mv nginx/nginx.conf ./nginx.conf
                 rm -rf nginx
+                echo "Moved nginx.conf"
             fi
             
-            # 2. Generate Secrets (if not exists)
+            echo "=== Step 2: Generate Secrets ==="
             if [ ! -f .env ]; then
                 echo "SECRET_KEY=$(openssl rand -hex 32)" > .env
-                echo "Generated new SECRET_KEY"
+                echo "Created new .env with SECRET_KEY"
             else
                 if ! grep -q "SECRET_KEY" .env; then
                     echo "SECRET_KEY=$(openssl rand -hex 32)" >> .env
                     echo "Appended SECRET_KEY to existing .env"
+                else
+                    echo ".env already contains SECRET_KEY"
                 fi
             fi
             
-            # 3. Export environment variables for sudo docker
-            set -a
-            source .env
-            set +a
-            export SECRET_KEY
+            echo "=== Step 3: Verify .env file ==="
+            cat .env | head -c 50
+            echo "..."
             
-            # 4. Docker Login (Required for private GHCR)
+            echo "=== Step 4: Docker Login ==="
             echo ${{ secrets.GITHUB_TOKEN }} | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # 5. Replace namespace variable
+            echo "=== Step 5: Replace namespace variable ==="
             sed -i 's/${GITHUB_REPOSITORY_OWNER}/${{ github.repository_owner }}/g' docker-compose.prod.yml
             
-            # 6. Pull Images (Incremental update)
-            sudo -E docker compose --env-file .env -f docker-compose.prod.yml pull -q
+            echo "=== Step 6: Stop existing services ==="
+            sudo docker compose -f docker-compose.prod.yml down || true
             
-            # 7. Start Services (with explicit env file)
-            sudo -E docker compose --env-file .env -f docker-compose.prod.yml up -d --remove-orphans
+            echo "=== Step 7: Pull Images ==="
+            sudo docker compose --env-file .env -f docker-compose.prod.yml pull -q
             
-            # 8. Wait for services to be healthy
-            sleep 15
+            echo "=== Step 8: Start Services ==="
+            sudo docker compose --env-file .env -f docker-compose.prod.yml up -d
             
-            # 9. Migration
-            sudo -E docker compose --env-file .env -f docker-compose.prod.yml exec -T backend alembic upgrade head || true
+            echo "=== Step 9: Check container status ==="
+            sleep 10
+            sudo docker compose -f docker-compose.prod.yml ps -a
             
-            # 10. Cleanup
+            echo "=== Step 10: Check backend logs ==="
+            sudo docker compose -f docker-compose.prod.yml logs backend --tail=30 || true
+            
+            echo "=== Step 11: Migration ==="
+            sudo docker compose --env-file .env -f docker-compose.prod.yml exec -T backend alembic upgrade head || echo "Migration failed or skipped"
+            
+            echo "=== Step 12: Final health check ==="
+            curl -s http://localhost:8000/health || echo "Backend health check failed"
+            curl -s http://localhost:3000 | head -c 100 || echo "Frontend check failed"
+            
+            echo "=== Step 13: Cleanup ==="
             sudo docker image prune -f
             
-            # 11. Verify
-            echo "Deployment complete. Checking backend health..."
-            curl -s http://localhost:8000/health || echo "Health check failed"
+            echo "=== Deployment Complete ==="
