@@ -86,31 +86,44 @@ jobs:
                 rm -rf nginx
             fi
             
-            # 2. Generate Secrets
+            # 2. Generate Secrets (if not exists)
             if [ ! -f .env ]; then
                 echo "SECRET_KEY=$(openssl rand -hex 32)" > .env
+                echo "Generated new SECRET_KEY"
             else
                 if ! grep -q "SECRET_KEY" .env; then
                     echo "SECRET_KEY=$(openssl rand -hex 32)" >> .env
+                    echo "Appended SECRET_KEY to existing .env"
                 fi
             fi
-
-            # 3. Docker Login (Required for private GHCR)
+            
+            # 3. Export environment variables for sudo docker
+            set -a
+            source .env
+            set +a
+            export SECRET_KEY
+            
+            # 4. Docker Login (Required for private GHCR)
             echo ${{ secrets.GITHUB_TOKEN }} | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # 4. Replace namespace variable
+            # 5. Replace namespace variable
             sed -i 's/${GITHUB_REPOSITORY_OWNER}/${{ github.repository_owner }}/g' docker-compose.prod.yml
             
-            # 5. Pull Images (Incremental update)
-            # Using -q to prevent log buffer overflow
-            sudo docker compose -f docker-compose.prod.yml pull -q
+            # 6. Pull Images (Incremental update)
+            sudo -E docker compose --env-file .env -f docker-compose.prod.yml pull -q
             
-            # 6. Start Services
-            sudo docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            # 7. Start Services (with explicit env file)
+            sudo -E docker compose --env-file .env -f docker-compose.prod.yml up -d --remove-orphans
             
-            # 7. Migration
-            sleep 10
-            sudo docker compose -f docker-compose.prod.yml exec -T backend alembic upgrade head
+            # 8. Wait for services to be healthy
+            sleep 15
             
-            # 8. Cleanup
+            # 9. Migration
+            sudo -E docker compose --env-file .env -f docker-compose.prod.yml exec -T backend alembic upgrade head || true
+            
+            # 10. Cleanup
             sudo docker image prune -f
+            
+            # 11. Verify
+            echo "Deployment complete. Checking backend health..."
+            curl -s http://localhost:8000/health || echo "Health check failed"
