@@ -70,9 +70,10 @@ class User(Base):
     # 超级管理员标识（P0-003: 替代脆弱的 tenant_id==null 判断）
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     
-    # 安全增强：账户锁定机制
-    failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0)
-    locked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # 安全增强：账户锁定机制 - 暂时禁用直到数据库迁移完成
+    # TODO: 数据库迁移完成后取消注释
+    # failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    # locked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     # Relationship
     tenant: Mapped["Tenant"] = relationship(back_populates="users", foreign_keys=[tenant_id])

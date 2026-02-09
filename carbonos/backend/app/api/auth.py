@@ -133,9 +133,13 @@ async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
                 headers={"WWW-Authenticate": "Bearer"},
             )
         
-        # 检查账户锁定状态
-        if user.locked_until and user.locked_until > datetime.utcnow():
-            remaining_minutes = int((user.locked_until - datetime.utcnow()).total_seconds() / 60) + 1
+        # 安全获取账户锁定相关字段（兼容缺失列的情况）
+        locked_until = getattr(user, 'locked_until', None)
+        failed_attempts = getattr(user, 'failed_login_attempts', 0) or 0
+        
+        # 检查账户锁定状态（仅当列存在时）
+        if locked_until and locked_until > datetime.utcnow():
+            remaining_minutes = int((locked_until - datetime.utcnow()).total_seconds() / 60) + 1
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"账户已锁定，请 {remaining_minutes} 分钟后再试"
@@ -143,23 +147,34 @@ async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
         
         # 验证密码
         if not verify_password(user_data.password, user.password_hash):
-            # 增加失败计数
-            user.failed_login_attempts += 1
+            # 尝试增加失败计数（仅当列存在时）
+            try:
+                if hasattr(user, 'failed_login_attempts'):
+                    user.failed_login_attempts = failed_attempts + 1
+                    
+                    # 达到阈值则锁定账户
+                    if user.failed_login_attempts >= MAX_LOGIN_ATTEMPTS:
+                        if hasattr(user, 'locked_until'):
+                            user.locked_until = datetime.utcnow() + timedelta(minutes=LOCK_DURATION_MINUTES)
+                        await db.commit()
+                        raise HTTPException(
+                            status_code=status.HTTP_403_FORBIDDEN,
+                            detail=f"登录失败次数过多，账户已锁定 {LOCK_DURATION_MINUTES} 分钟"
+                        )
+                    
+                    remaining_attempts = MAX_LOGIN_ATTEMPTS - user.failed_login_attempts
+                    await db.commit()
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail=f"邮箱或密码错误，剩余尝试次数：{remaining_attempts}",
+                        headers={"WWW-Authenticate": "Bearer"},
+                    )
+            except AttributeError:
+                pass  # 列不存在，忽略账户锁定功能
             
-            # 达到阈值则锁定账户
-            if user.failed_login_attempts >= MAX_LOGIN_ATTEMPTS:
-                user.locked_until = datetime.utcnow() + timedelta(minutes=LOCK_DURATION_MINUTES)
-                await db.commit()
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"登录失败次数过多，账户已锁定 {LOCK_DURATION_MINUTES} 分钟"
-                )
-            
-            remaining_attempts = MAX_LOGIN_ATTEMPTS - user.failed_login_attempts
-            await db.commit()
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"邮箱或密码错误，剩余尝试次数：{remaining_attempts}",
+                detail="邮箱或密码错误",
                 headers={"WWW-Authenticate": "Bearer"},
             )
         
@@ -170,10 +185,17 @@ async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
                 detail="账户已被禁用，请联系管理员"
             )
         
-        # 登录成功：重置失败计数和锁定状态
-        user.failed_login_attempts = 0
-        user.locked_until = None
-        user.last_login_at = datetime.utcnow()
+        # 登录成功：尝试重置失败计数和锁定状态（仅当列存在时）
+        try:
+            if hasattr(user, 'failed_login_attempts'):
+                user.failed_login_attempts = 0
+            if hasattr(user, 'locked_until'):
+                user.locked_until = None
+        except AttributeError:
+            pass  # 列不存在，忽略
+        
+        if hasattr(user, 'last_login_at'):
+            user.last_login_at = datetime.utcnow()
         await db.commit()
         
         # 生成 Token，Payload 包含 tenant_id
