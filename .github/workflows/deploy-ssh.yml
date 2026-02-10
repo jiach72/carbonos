@@ -117,26 +117,30 @@ jobs:
                 alembic stamp head 2>/dev/null || true
             }
             
-            # 无论迁移是否成功，都确保缺失的列存在（幂等操作）
+            # 无论迁移是否成功，都确保所有必需列存在（幂等操作）
             echo "=== Step 10b: Ensure Required Columns Exist ==="
             sudo docker exec carbonos-postgres-1 psql -U carbonos -d carbonos -c "
                 DO \$\$ BEGIN
+                    -- is_superuser 列
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_superuser') THEN
+                        ALTER TABLE users ADD COLUMN is_superuser BOOLEAN NOT NULL DEFAULT false;
+                        CREATE INDEX ix_users_is_superuser ON users(is_superuser);
+                        RAISE NOTICE 'Added is_superuser column';
+                    END IF;
+                    -- last_login_at 列
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'last_login_at') THEN
+                        ALTER TABLE users ADD COLUMN last_login_at TIMESTAMP;
+                        RAISE NOTICE 'Added last_login_at column';
+                    END IF;
+                    -- failed_login_attempts 列
                     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'failed_login_attempts') THEN
                         ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER NOT NULL DEFAULT 0;
                         RAISE NOTICE 'Added failed_login_attempts column';
-                    ELSE
-                        RAISE NOTICE 'failed_login_attempts column already exists';
                     END IF;
-                END \$\$;
-            "
-            
-            sudo docker exec carbonos-postgres-1 psql -U carbonos -d carbonos -c "
-                DO \$\$ BEGIN
+                    -- locked_until 列
                     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'locked_until') THEN
                         ALTER TABLE users ADD COLUMN locked_until TIMESTAMP;
                         RAISE NOTICE 'Added locked_until column';
-                    ELSE
-                        RAISE NOTICE 'locked_until column already exists';
                     END IF;
                 END \$\$;
             "
