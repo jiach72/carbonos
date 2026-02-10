@@ -25,8 +25,8 @@ const tiers: PricingTier[] = [
     {
         name: '启航版',
         nameEn: 'Essential',
-        price: '¥9,800',
-        priceNote: '/年',
+        price: '免费',
+        priceNote: '',
         description: '适合小型出口企业，快速应对 CBAM 碳关税合规',
         icon: <Factory className="w-6 h-6" />,
         gradient: 'from-slate-500 to-slate-600',
@@ -46,7 +46,7 @@ const tiers: PricingTier[] = [
     {
         name: '专业版',
         nameEn: 'Pro',
-        price: '¥49,800',
+        price: '¥3,800',
         priceNote: '/年',
         description: '适合中型制造企业，降本增效、全面盘查',
         icon: <Building2 className="w-6 h-6" />,
@@ -68,7 +68,7 @@ const tiers: PricingTier[] = [
     {
         name: '旗舰版',
         nameEn: 'Enterprise',
-        price: '¥200,000',
+        price: '¥9,800',
         priceNote: '起/年',
         description: '适合工业园区、大型集团、政府客户',
         icon: <Crown className="w-6 h-6" />,

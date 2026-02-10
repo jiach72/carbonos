@@ -52,9 +52,16 @@ function ROISimulator() {
     const [area, setArea] = useState(50); // 1000m2
     const [elec, setElec] = useState(100); // 10000kWh
 
-    // Simple simulation logic
-    const carbonReduction = Math.round(elec * 0.5703 / 1000 * 0.3 * 10) / 10; // 30% reduction
-    const costSavings = Math.round(elec * 100 * 0.8 * 0.15); // Energy saving cost
+    // 计算逻辑:
+    // elec 单位是"万度"（万 kWh），area 单位是"万㎡"
+    // 碳排放因子: 0.5703 kgCO₂/kWh（华东电网）
+    // 假设节能率: 15%（综合能源管理）
+    // 减碳量(吨) = elec × 10000(kWh) × 0.5703(kg/kWh) × 15%(节能率) ÷ 1000(kg→吨)
+    const savingRate = 0.15; // 15% 节能率
+    const carbonFactor = 0.5703; // kgCO₂/kWh
+    const carbonReduction = Math.round(elec * 10000 * carbonFactor * savingRate / 1000 * 10) / 10;
+    // 节支(元) = elec × 10000(kWh) × 0.8(元/kWh 工业电价) × 15%(节能率)
+    const costSavings = Math.round(elec * 10000 * 0.8 * savingRate);
 
     return (
         <div className="bg-slate-900/50 border border-emerald-500/20 rounded-3xl p-8 backdrop-blur-sm">

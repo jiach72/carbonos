@@ -136,22 +136,32 @@ export default function FeatureFlagsPage() {
                     <Button
                         size="sm"
                         variant={filterCategory === null ? 'default' : 'outline'}
-                        className={filterCategory === null ? 'bg-emerald-600' : 'border-slate-700'}
+                        className={filterCategory === null ? 'bg-emerald-600 hover:bg-emerald-500' : 'border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white'}
                         onClick={() => setFilterCategory(null)}
                     >
                         全部
                     </Button>
-                    {Object.entries(categoryLabels).map(([key, { label }]) => (
-                        <Button
-                            key={key}
-                            size="sm"
-                            variant={filterCategory === key ? 'default' : 'outline'}
-                            className={filterCategory === key ? 'bg-emerald-600' : 'border-slate-700'}
-                            onClick={() => setFilterCategory(key)}
-                        >
-                            {label}
-                        </Button>
-                    ))}
+                    {Object.entries(categoryLabels).map(([key, { label, color }]) => {
+                        const isActive = filterCategory === key;
+                        const colorMap: Record<string, { active: string; inactive: string }> = {
+                            core: { active: 'bg-emerald-600 hover:bg-emerald-500 text-white', inactive: 'border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10' },
+                            ai: { active: 'bg-purple-600 hover:bg-purple-500 text-white', inactive: 'border-purple-500/40 text-purple-400 hover:bg-purple-500/10' },
+                            integration: { active: 'bg-cyan-600 hover:bg-cyan-500 text-white', inactive: 'border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10' },
+                            advanced: { active: 'bg-amber-600 hover:bg-amber-500 text-white', inactive: 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10' },
+                        };
+                        const styles = colorMap[key] || colorMap.core;
+                        return (
+                            <Button
+                                key={key}
+                                size="sm"
+                                variant={isActive ? 'default' : 'outline'}
+                                className={isActive ? styles.active : styles.inactive}
+                                onClick={() => setFilterCategory(key)}
+                            >
+                                {label}
+                            </Button>
+                        );
+                    })}
                 </div>
             </div>
 
