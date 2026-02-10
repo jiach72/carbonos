@@ -146,6 +146,11 @@ jobs:
             "
             echo "Required columns verified"
             
+            echo "=== Step 10c: Seed Production Data ==="
+            cd ~/apps/carbonos/carbonos/backend
+            source venv/bin/activate
+            python -m app.seed_prod || echo "Seed script failed (non-fatal)"
+            
             echo "=== Step 11: Create logs directory ==="
             mkdir -p ~/apps/carbonos/logs
             mkdir -p ~/apps/carbonos/carbonos/backend/logs
