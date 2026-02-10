@@ -128,29 +128,24 @@ app.add_middleware(
 from app.core.middleware.tenant import TenantMiddleware
 app.add_middleware(TenantMiddleware)
 
-# 3. API 限流中间件（P2: 生产环境启用）
-from app.core.middleware.ratelimit import (
-    RateLimitMiddleware, 
-    RequestLoggingMiddleware,
-    AuthRateLimitMiddleware,
-    SecurityHeadersMiddleware
-)
-
-# 安全响应头：始终启用
+# 3. 安全响应头中间件（仅修改 response headers，不影响 request body）
+from app.core.middleware.ratelimit import SecurityHeadersMiddleware
 app.add_middleware(SecurityHeadersMiddleware, enabled=True)
 
-# 认证端点限流：始终启用（5次/15分钟）
-app.add_middleware(AuthRateLimitMiddleware, enabled=True)
+# ⚠️ 以下中间件暂时禁用
+# 原因：多层 BaseHTTPMiddleware 叠加导致 POST 请求体被消费，引发 500 错误
+# 参考：https://github.com/encode/starlette/issues/1012
+# TODO: 迁移到纯 ASGI 中间件后重新启用
 
-# 全局限流：生产环境启用
-app.add_middleware(RateLimitMiddleware, enabled=not settings.debug)
+# from app.core.middleware.ratelimit import AuthRateLimitMiddleware, RateLimitMiddleware, RequestLoggingMiddleware
+# app.add_middleware(AuthRateLimitMiddleware, enabled=True)
+# app.add_middleware(RateLimitMiddleware, enabled=not settings.debug)
+# app.add_middleware(RequestLoggingMiddleware, enabled=True)
 
-# 4. 请求日志中间件（P1-004: 记录请求日志）
-app.add_middleware(RequestLoggingMiddleware, enabled=True)
+# from app.core.metrics import PrometheusMiddleware, metrics_endpoint, init_metrics
+# app.add_middleware(PrometheusMiddleware, enabled=not settings.debug)
 
-# 5. Prometheus 监控中间件（P2: 生产环境启用）
-from app.core.metrics import PrometheusMiddleware, metrics_endpoint, init_metrics
-app.add_middleware(PrometheusMiddleware, enabled=not settings.debug)
+from app.core.metrics import metrics_endpoint, init_metrics
 init_metrics()
 
 
