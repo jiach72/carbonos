@@ -36,16 +36,18 @@ async def seed_data():
                     full_name="Super Admin",
                     role=UserRole.ADMIN,
                     status=UserStatus.ACTIVE,
-                    is_superuser=True  # P0-003: 明确标识超级管理员
+                    is_superuser=True
                 )
                 db.add(admin)
                 logger.info("Created Super Admin: admin@scdc.cloud (is_superuser=True)")
             else:
-                # P0-003: 确保现有超管有正确的标识
-                if not admin.is_superuser:
-                    admin.is_superuser = True
-                    logger.info("Updated Super Admin: set is_superuser=True")
-                logger.info("Super Admin already exists.")
+                # 每次部署强制重置密码和状态，确保测试凭证一致
+                admin.password_hash = get_password_hash("123456")
+                admin.is_superuser = True
+                admin.failed_login_attempts = 0
+                admin.locked_until = None
+                admin.status = UserStatus.ACTIVE
+                logger.info("Reset Super Admin: password/status/lockout cleared")
 
             # 2. 创建测试租户 (ABC Tech)
             logger.info("Checking Test Tenant...")
@@ -172,7 +174,12 @@ async def seed_data():
                 logger.info("Mock data generated.")
                 
             else:
-                logger.info("Test Tenant User already exists.")
+                # 重置测试用户密码和状态
+                test_user.password_hash = get_password_hash("123456")
+                test_user.failed_login_attempts = 0
+                test_user.locked_until = None
+                test_user.status = UserStatus.ACTIVE
+                logger.info("Reset Test Tenant User: password/status/lockout cleared")
 
             await db.commit()
             logger.info("Seed completed successfully.")
