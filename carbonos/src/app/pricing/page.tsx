@@ -19,70 +19,84 @@ interface PricingTier {
     ctaLink: string;
     popular?: boolean;
     gradient: string;
+    rules?: string;
 }
 
 const tiers: PricingTier[] = [
     {
-        name: '启航版',
+        name: '入门版',
         nameEn: 'Essential',
-        price: '免费',
-        priceNote: '',
-        description: '适合小型出口企业，快速应对 CBAM 碳关税合规',
+        price: '¥3,800',
+        priceNote: '/年',
+        description: '单厂/小团队起步，快速合规模拟',
         icon: <Factory className="w-6 h-6" />,
         gradient: 'from-slate-500 to-slate-600',
         features: [
             { name: '组织碳核算 (Excel 导入)', included: true },
-            { name: '数字化调研向导', included: true },
-            { name: 'CBAM 报告 (1份/月)', included: true },
-            { name: '基础数据看板', included: true },
+            { name: '基础 CBAM 模板', included: true },
+            { name: '基础报表', included: true },
+            { name: '多站点支持', included: false },
             { name: 'AI 智能诊断', included: false },
-            { name: 'IoT 数据接入', included: false },
-            { name: '产品碳足迹 (PCF)', included: false },
-            { name: '碳-能协同控制', included: false },
         ],
+        rules: '限1站点、数据点<1万条；超额¥500/月',
         cta: '立即开通',
         ctaLink: '/diagnosis',
     },
     {
         name: '专业版',
         nameEn: 'Pro',
-        price: '¥3,800',
+        price: '¥5,800',
         priceNote: '/年',
-        description: '适合中型制造企业，降本增效、全面盘查',
+        description: '2–5站点区域企业，日常监测',
         icon: <Building2 className="w-6 h-6" />,
         gradient: 'from-emerald-500 to-teal-600',
         popular: true,
         features: [
-            { name: '组织碳核算 (Excel 导入)', included: true },
-            { name: '数字化调研向导', included: true },
-            { name: 'CBAM 报告 (不限)', included: true },
-            { name: '基础数据看板', included: true },
-            { name: 'AI 智能诊断', included: true },
-            { name: 'IoT 数据接入 (10点)', included: true },
-            { name: '产品碳足迹 (PCF)', included: true },
-            { name: '碳-能协同控制', included: false },
+            { name: '组织碳核算 & 基础功能', included: true },
+            { name: '多站点支持 (含3站点)', included: true },
+            { name: '预警通知', included: true },
+            { name: '基础 AI 报表', included: true },
+            { name: '供应链分析', included: false },
         ],
+        rules: '内含3站点；超每站点¥800/年',
         cta: '免费试用',
         ctaLink: '/diagnosis',
     },
     {
-        name: '旗舰版',
-        nameEn: 'Enterprise',
+        name: '标准版',
+        nameEn: 'Standard',
         price: '¥9,800',
-        priceNote: '起/年',
-        description: '适合工业园区、大型集团、政府客户',
-        icon: <Crown className="w-6 h-6" />,
-        gradient: 'from-amber-500 to-orange-600',
+        priceNote: '/年',
+        description: '中型企业，ESG披露+优化',
+        icon: <Zap className="w-6 h-6" />,
+        gradient: 'from-orange-500 to-red-600',
         features: [
-            { name: '组织碳核算 (Excel 导入)', included: true },
-            { name: '数字化调研向导', included: true },
-            { name: 'CBAM 报告 (不限)', included: true },
-            { name: '基础数据看板', included: true },
-            { name: 'AI 智能诊断', included: true },
-            { name: 'IoT 数据接入 (无限)', included: true },
-            { name: '产品碳足迹 (PCF)', included: true },
-            { name: '碳-能协同控制', included: true },
+            { name: '包含专业版所有功能', included: true },
+            { name: '高级 AI 报表 (自动/自定义)', included: true },
+            { name: '供应链初步分析', included: true },
+            { name: '数据点扩容 (<10万)', included: true },
+            { name: 'API 集成', included: false },
         ],
+        rules: '内含5站点、数据点<10万；超¥300/万条',
+        cta: '立即开通',
+        ctaLink: '/diagnosis',
+    },
+    {
+        name: '企业版',
+        nameEn: 'Enterprise',
+        price: '¥18,000',
+        priceNote: '起/年',
+        description: '集团/园区，复杂场景',
+        icon: <Crown className="w-6 h-6" />,
+        gradient: 'from-purple-500 to-indigo-600',
+        features: [
+            { name: '全功能 + API 集成', included: true },
+            { name: '碳资产管理', included: true },
+            { name: '定制咨询小时', included: true },
+            { name: '私有化部署选项', included: true },
+            { name: '专属客户经理', included: true },
+        ],
+        rules: '项目报价，含私有化选项',
         cta: '联系销售',
         ctaLink: '/about#contact',
     },
@@ -128,15 +142,15 @@ export default function PricingPage() {
 
                 {/* Pricing Cards */}
                 <section className="pb-20 px-4">
-                    <div className="max-w-6xl mx-auto">
-                        <div className="grid md:grid-cols-3 gap-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {tiers.map((tier, index) => (
                                 <motion.div
                                     key={tier.nameEn}
                                     initial={{ opacity: 0, y: 30 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.5, delay: index * 0.1 }}
-                                    className={`relative rounded-2xl ${tier.popular
+                                    className={`relative rounded-2xl flex flex-col ${tier.popular
                                         ? 'bg-gradient-to-b from-emerald-500/20 to-slate-900/80 border-2 border-emerald-500/50'
                                         : 'bg-slate-900/50 border border-slate-800'
                                         } backdrop-blur-sm overflow-hidden`}
@@ -147,28 +161,38 @@ export default function PricingPage() {
                                         </div>
                                     )}
 
-                                    <div className="p-6">
+                                    <div className="p-6 flex-1 flex flex-col">
                                         {/* Header */}
                                         <div className="flex items-center gap-3 mb-4">
-                                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tier.gradient} flex items-center justify-center text-white`}>
+                                            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${tier.gradient} flex items-center justify-center text-white`}>
                                                 {tier.icon}
                                             </div>
                                             <div>
-                                                <h3 className="text-xl font-bold text-white">{tier.name}</h3>
-                                                <p className="text-sm text-slate-500">{tier.nameEn}</p>
+                                                <h3 className="text-lg font-bold text-white">{tier.name}</h3>
+                                                <p className="text-xs text-slate-500">{tier.nameEn}</p>
                                             </div>
                                         </div>
 
                                         {/* Price */}
                                         <div className="mb-4">
-                                            <span className="text-4xl font-bold text-white">{tier.price}</span>
-                                            <span className="text-slate-400">{tier.priceNote}</span>
+                                            <span className="text-3xl font-bold text-white">{tier.price}</span>
+                                            <span className="text-slate-400 text-sm">{tier.priceNote}</span>
                                         </div>
 
-                                        <p className="text-slate-400 text-sm mb-6">{tier.description}</p>
+                                        <p className="text-slate-400 text-sm mb-6 h-10">{tier.description}</p>
+
+                                        {/* Rules */}
+                                        {tier.rules && (
+                                            <div className="mb-6 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                                                <p className="text-xs text-slate-400 leading-relaxed">
+                                                    <span className="text-slate-300 font-medium block mb-1">扩展规则：</span>
+                                                    {tier.rules}
+                                                </p>
+                                            </div>
+                                        )}
 
                                         {/* CTA Button */}
-                                        <Link href={tier.ctaLink}>
+                                        <Link href={tier.ctaLink} className="mt-auto">
                                             <Button
                                                 className={`w-full mb-6 ${tier.popular
                                                     ? 'bg-emerald-600 hover:bg-emerald-500'
@@ -181,15 +205,15 @@ export default function PricingPage() {
                                         </Link>
 
                                         {/* Features */}
-                                        <div className="space-y-3">
+                                        <div className="space-y-3 pt-4 border-t border-slate-800/50">
                                             {tier.features.map((feature) => (
-                                                <div key={feature.name} className="flex items-center gap-3">
+                                                <div key={feature.name} className="flex items-start gap-3">
                                                     {feature.included ? (
-                                                        <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                                                        <Check className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
                                                     ) : (
-                                                        <X className="w-5 h-5 text-slate-600 flex-shrink-0" />
+                                                        <X className="w-4 h-4 text-slate-600 flex-shrink-0 mt-0.5" />
                                                     )}
-                                                    <span className={feature.included ? 'text-slate-300' : 'text-slate-500'}>
+                                                    <span className={`text-sm ${feature.included ? 'text-slate-300' : 'text-slate-500'}`}>
                                                         {feature.name}
                                                     </span>
                                                 </div>
