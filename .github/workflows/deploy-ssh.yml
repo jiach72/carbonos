@@ -94,6 +94,8 @@ jobs:
             echo "=== Step 7: Setup Frontend ==="
             cd ~/apps/carbonos/carbonos
             npm install
+            # 必须删除旧的构建缓存，否则 Next.js 增量构建不会更新已有页面
+            rm -rf .next
             npm run build
             
             echo "=== Step 8: Stop Orphan Docker Containers ==="
