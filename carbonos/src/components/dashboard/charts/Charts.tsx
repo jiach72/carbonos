@@ -16,7 +16,20 @@ import {
     YAxis,
 } from "recharts";
 
-export function EmissionTrendChart({ data }: { data: any[] }) {
+/** 排放趋势图数据点 */
+interface TrendDataPoint {
+    name: string;
+    value: number;
+}
+
+/** 排放分布图数据点 */
+interface DistributionDataPoint {
+    name: string;
+    value: number;
+    color: string;
+}
+
+export function EmissionTrendChart({ data }: { data: TrendDataPoint[] }) {
     return (
         <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -48,7 +61,7 @@ export function EmissionTrendChart({ data }: { data: any[] }) {
     );
 }
 
-export function EmissionDistributionChart({ data }: { data: any[] }) {
+export function EmissionDistributionChart({ data }: { data: DistributionDataPoint[] }) {
     return (
         <div className="h-[300px] w-full flex flex-col items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">

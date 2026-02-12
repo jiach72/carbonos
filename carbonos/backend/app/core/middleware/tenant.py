@@ -1,12 +1,10 @@
 """
-多租户中间件
+多租户中间件（纯 ASGI）
 P0-004: 从 JWT Token 解析 tenant_id，而非信任客户端 Header
 """
 
 import contextvars
-from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Scope, Receive, Send
 from jose import jwt, JWTError
 import uuid
 
@@ -27,75 +25,77 @@ PUBLIC_PATHS = [
 ]
 
 
-class TenantMiddleware(BaseHTTPMiddleware):
+class TenantMiddleware:
     """
-    多租户中间件
-    
+    多租户中间件（纯 ASGI）
+
     功能：
     1. 从 JWT Token 中解析 tenant_id（安全）
     2. 设置租户上下文供后续请求使用
     3. 自动跳过公开接口
     """
-    
+
     def __init__(self, app: ASGIApp):
-        super().__init__(app)
+        self.app = app
         self.settings = get_settings()
-    
+
     def _is_public_path(self, path: str) -> bool:
         """检查是否为公开接口"""
         return any(path.startswith(prefix) for prefix in PUBLIC_PATHS)
-    
-    def _extract_tenant_from_jwt(self, auth_header: str) -> str | None:
-        """
-        从 Authorization Header 中提取 tenant_id
-        P0-004: 关键安全改进 - 不再信任客户端 Header
-        """
+
+    def _extract_tenant_from_jwt(self, scope: Scope) -> str | None:
+        """从 ASGI scope 的 Authorization Header 中提取 tenant_id"""
+        auth_header = ""
+        for key, value in scope.get("headers", []):
+            if key.decode().lower() == "authorization":
+                auth_header = value.decode()
+                break
+
         if not auth_header or not auth_header.startswith("Bearer "):
             return None
-        
-        token = auth_header[7:]  # 移除 "Bearer " 前缀
-        
+
+        token = auth_header[7:]
+
         try:
             payload = jwt.decode(
-                token, 
-                self.settings.secret_key, 
+                token,
+                self.settings.secret_key,
                 algorithms=[self.settings.algorithm]
             )
             tenant_id = payload.get("tenant_id")
-            
-            # 验证 tenant_id 格式
+
             if tenant_id:
                 uuid.UUID(tenant_id)  # 验证是有效的 UUID
                 return tenant_id
-                
+
         except (JWTError, ValueError):
-            # JWT 解析失败或 tenant_id 格式无效
-            # 让后续的认证依赖项处理具体错误
             pass
-        
+
         return None
-    
-    async def dispatch(self, request: Request, call_next):
-        # 公开接口直接放行
-        if self._is_public_path(request.url.path):
-            return await call_next(request)
-        
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        if self._is_public_path(path):
+            await self.app(scope, receive, send)
+            return
+
         # 从 JWT 提取 tenant_id（安全方式）
-        auth_header = request.headers.get("Authorization", "")
-        tenant_id = self._extract_tenant_from_jwt(auth_header)
-        
+        tenant_id = self._extract_tenant_from_jwt(scope)
+
         token_var = None
         if tenant_id:
             token_var = tenant_context.set(tenant_id)
-        
+
         try:
-            response = await call_next(request)
+            await self.app(scope, receive, send)
         finally:
             # 清理上下文，防止污染其他请求
             if token_var is not None:
                 tenant_context.reset(token_var)
-        
-        return response
 
 
 def get_current_tenant_id() -> str | None:

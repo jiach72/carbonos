@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { ToggleLeft, ToggleRight, Shield, Zap, Database, Brain, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -178,7 +178,7 @@ export default function FeatureFlagsPage() {
                     </thead>
                     <tbody>
                         {Object.entries(groupedFlags).map(([category, categoryFlags]) => (
-                            <>
+                            <Fragment key={category}>
                                 <tr key={`header-${category}`} className="bg-slate-800/30">
                                     <td colSpan={5} className="p-3">
                                         <div className={`flex items-center gap-2 font-medium ${categoryLabels[category].color}`}>
@@ -209,7 +209,7 @@ export default function FeatureFlagsPage() {
                                         ))}
                                     </tr>
                                 ))}
-                            </>
+                            </Fragment>
                         ))}
                     </tbody>
                 </table>

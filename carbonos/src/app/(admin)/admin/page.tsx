@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Building2, Leaf, Activity, TrendingUp } from "lucide-react";
+import { Users, Building2, Leaf, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 interface Stats {

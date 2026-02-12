@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -49,11 +49,7 @@ export default function TenantDetailPage() {
     const [selectedPlan, setSelectedPlan] = useState("");
     const [actionLoading, setActionLoading] = useState(false);
 
-    useEffect(() => {
-        if (params.id) fetchDetail();
-    }, [params.id]);
-
-    const fetchDetail = async () => {
+    const fetchDetail = useCallback(async () => {
         try {
             const token = localStorage.getItem("access_token");
             const res = await fetch(`/api/v1/admin/tenants/${params.id}`, {
@@ -63,13 +59,17 @@ export default function TenantDetailPage() {
             if (!res.ok) throw new Error("加载失败");
             const data = await res.json();
             setTenant(data);
-            setSelectedPlan(data.plan); // Initialize plan
+            setSelectedPlan(data.plan); // 初始化套餐选择
         } catch (e) {
             toast.error("获取租户详情失败");
         } finally {
             setLoading(false);
         }
-    };
+    }, [params.id]);
+
+    useEffect(() => {
+        if (params.id) fetchDetail();
+    }, [params.id, fetchDetail]);
 
     const handleResetPassword = async () => {
         if (!newPassword) {
@@ -96,8 +96,8 @@ export default function TenantDetailPage() {
             toast.success("管理员密码已重置");
             setIsResetDialogOpen(false);
             setNewPassword("");
-        } catch (e: any) {
-            toast.error(e.message);
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "操作失败");
         } finally {
             setActionLoading(false);
         }
@@ -125,8 +125,8 @@ export default function TenantDetailPage() {
             setTenant(updatedTenant);
             toast.success("套餐已变更");
             setIsPlanDialogOpen(false);
-        } catch (e: any) {
-            toast.error(e.message);
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "操作失败");
         } finally {
             setActionLoading(false);
         }

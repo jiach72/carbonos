@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,7 @@ export default function TenantsPage() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchTenants = async () => {
+    const fetchTenants = useCallback(async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem("access_token");
@@ -44,7 +44,7 @@ export default function TenantsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const updateStatus = async (id: string, newStatus: string) => {
         try {
@@ -69,7 +69,7 @@ export default function TenantsPage() {
 
     useEffect(() => {
         fetchTenants();
-    }, []);
+    }, [fetchTenants]);
 
     return (
         <div className="space-y-6">

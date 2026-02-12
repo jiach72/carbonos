@@ -55,10 +55,9 @@ async def lifespan(app: FastAPI):
     logger = get_logger("app.main")
     logger.info("application_starting", version="0.1.0")
     
-    # 初始化数据库表
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("database_initialized")
+    # 注：生产环境通过 Alembic 迁移管理数据库 Schema (alembic upgrade head)
+    # 已移除 Base.metadata.create_all 自动建表，避免掩盖迁移脚本问题
+    logger.info("database_ready")
     
     # 初始化超级管理员（系统自带固定账户）
     from app.core.init_superuser import init_superuser
@@ -128,24 +127,26 @@ app.add_middleware(
 from app.core.middleware.tenant import TenantMiddleware
 app.add_middleware(TenantMiddleware)
 
-# 3. 安全响应头中间件（仅修改 response headers，不影响 request body）
+# 3. 安全响应头中间件
 from app.core.middleware.ratelimit import SecurityHeadersMiddleware
 app.add_middleware(SecurityHeadersMiddleware, enabled=True)
 
-# ⚠️ 以下中间件暂时禁用
-# 原因：多层 BaseHTTPMiddleware 叠加导致 POST 请求体被消费，引发 500 错误
-# 参考：https://github.com/encode/starlette/issues/1012
-# TODO: 迁移到纯 ASGI 中间件后重新启用
+# 4. 认证端点限流中间件（防暴力破解）
+from app.core.middleware.ratelimit import AuthRateLimitMiddleware
+app.add_middleware(AuthRateLimitMiddleware, enabled=True)
 
-# from app.core.middleware.ratelimit import AuthRateLimitMiddleware, RateLimitMiddleware, RequestLoggingMiddleware
-# app.add_middleware(AuthRateLimitMiddleware, enabled=True)
-# app.add_middleware(RateLimitMiddleware, enabled=not settings.debug)
-# app.add_middleware(RequestLoggingMiddleware, enabled=True)
+# 5. 全局 API 限流中间件
+from app.core.middleware.ratelimit import RateLimitMiddleware
+app.add_middleware(RateLimitMiddleware, enabled=not settings.debug)
 
-# from app.core.metrics import PrometheusMiddleware, metrics_endpoint, init_metrics
-# app.add_middleware(PrometheusMiddleware, enabled=not settings.debug)
+# 6. 请求日志中间件
+from app.core.middleware.ratelimit import RequestLoggingMiddleware
+app.add_middleware(RequestLoggingMiddleware, enabled=True)
 
-from app.core.metrics import metrics_endpoint, init_metrics
+# 7. Prometheus 监控中间件
+from app.core.metrics import PrometheusMiddleware, metrics_endpoint, init_metrics
+app.add_middleware(PrometheusMiddleware, enabled=not settings.debug)
+
 init_metrics()
 
 

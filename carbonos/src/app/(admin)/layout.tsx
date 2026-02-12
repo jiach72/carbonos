@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
 import { toast } from "sonner";
@@ -10,7 +10,6 @@ import {
     Settings,
     LogOut,
     ShieldAlert,
-    Menu,
     FileText,
     ToggleRight
 } from "lucide-react";
@@ -54,23 +53,23 @@ export default function AdminLayout({
     const router = useRouter();
     const pathname = usePathname();
     const { user, loading } = useUser();
-    const [isAuthorized, setIsAuthorized] = useState(false);
 
+    // 派生状态：直接从 user/loading 计算授权结果，避免 useEffect 中 setState 导致级联渲染
+    const isAuthorized = useMemo(() => {
+        if (loading) return false;
+        return !!user && user.role === 'admin' && !user.tenant_id;
+    }, [user, loading]);
+
+    // 副作用：仅处理重定向，不再操作 state
     useEffect(() => {
-        if (!loading) {
-            if (!user) {
-                // Not logged in
-                router.replace("/sys-portal");
-            } else if (user.role !== 'admin' || user.tenant_id) {
-                // Logged in but not SUPER admin (Tenant Admins have tenant_id)
-                toast.error("权限不足", {
-                    description: "您没有权限访问管理后台",
-                });
-                router.replace("/dashboard");
-            } else {
-                // Authorized
-                setIsAuthorized(true);
-            }
+        if (loading) return;
+        if (!user) {
+            router.replace("/sys-portal");
+        } else if (user.role !== 'admin' || user.tenant_id) {
+            toast.error("权限不足", {
+                description: "您没有权限访问管理后台",
+            });
+            router.replace("/dashboard");
         }
     }, [user, loading, router]);
 

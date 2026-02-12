@@ -7,9 +7,8 @@ import time
 from typing import Callable
 from functools import wraps
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import ASGIApp
+from fastapi import Response
+from starlette.types import ASGIApp, Scope, Receive, Send, Message
 
 try:
     from prometheus_client import (
@@ -100,12 +99,12 @@ def init_metrics():
     })
 
 
-class PrometheusMiddleware(BaseHTTPMiddleware):
+class PrometheusMiddleware:
     """
-    Prometheus 指标收集中间件
+    Prometheus 指标收集中间件（纯 ASGI）
     自动记录请求计数、延迟和活跃连接数
     """
-    
+
     # 跳过指标收集的路径
     SKIP_PATHS = [
         "/metrics",
@@ -114,14 +113,14 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         "/openapi.json",
         "/redoc",
     ]
-    
+
     def __init__(self, app: ASGIApp, enabled: bool = True):
-        super().__init__(app)
+        self.app = app
         self.enabled = enabled and PROMETHEUS_AVAILABLE
-    
+
     def _should_skip(self, path: str) -> bool:
         return any(path.startswith(skip) for skip in self.SKIP_PATHS)
-    
+
     def _normalize_path(self, path: str) -> str:
         """
         归一化路径，避免基数爆炸
@@ -138,49 +137,52 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         # 数字 ID 替换
         path = re.sub(r'/\d+', '/{id}', path)
         return path
-    
-    async def dispatch(self, request: Request, call_next):
-        if not self.enabled or self._should_skip(request.url.path):
-            return await call_next(request)
-        
-        method = request.method
-        path = self._normalize_path(request.url.path)
-        
-        # 获取租户 ID
-        tenant_id = getattr(request.state, "tenant_id", None) or "unknown"
-        
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or not self.enabled:
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        if self._should_skip(path):
+            await self.app(scope, receive, send)
+            return
+
+        method = scope.get("method", "UNKNOWN")
+        normalized_path = self._normalize_path(path)
+        tenant_id = "unknown" # In raw ASGI, tenant_id would need to be extracted from headers or query params if available
+        status_code = 500
+
         # 增加活跃请求计数
-        REQUESTS_IN_PROGRESS.labels(method=method, endpoint=path).inc()
-        
+        REQUESTS_IN_PROGRESS.labels(method=method, endpoint=normalized_path).inc()
         start_time = time.perf_counter()
-        
+
+        async def send_wrapper(message: Message) -> None:
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message.get("status", 500)
+            await send(message)
+
         try:
-            response = await call_next(request)
-            status_code = response.status_code
+            await self.app(scope, receive, send_wrapper)
         except Exception:
             status_code = 500
             raise
         finally:
-            # 记录延迟
             duration = time.perf_counter() - start_time
-            REQUEST_LATENCY.labels(method=method, endpoint=path).observe(duration)
-            
-            # 记录请求计数
+            REQUEST_LATENCY.labels(method=method, endpoint=normalized_path).observe(duration)
+
             REQUEST_COUNT.labels(
                 method=method,
-                endpoint=path,
+                endpoint=normalized_path,
                 status_code=str(status_code),
                 tenant_id=str(tenant_id)
             ).inc()
-            
-            # 记录租户请求
+
             if tenant_id != "unknown":
                 TENANT_REQUESTS.labels(tenant_id=str(tenant_id)).inc()
-            
-            # 减少活跃请求计数
-            REQUESTS_IN_PROGRESS.labels(method=method, endpoint=path).dec()
-        
-        return response
+
+            REQUESTS_IN_PROGRESS.labels(method=method, endpoint=normalized_path).dec()
 
 
 async def metrics_endpoint() -> Response:

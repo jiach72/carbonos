@@ -189,7 +189,15 @@ export default function CorporateHomePage() {
   );
 }
 
-function MatrixCard({ icon: Icon, title, desc, color, link }: any) {
+interface MatrixCardProps {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc: string;
+  color: string;
+  link?: string;
+}
+
+function MatrixCard({ icon: Icon, title, desc, color, link }: MatrixCardProps) {
   const CardContent = (
     <div className="bg-slate-800/50 p-6 rounded-2xl border border-white/5 hover:bg-slate-800 transition-all cursor-pointer group h-full">
       <div className={`w-12 h-12 rounded-lg bg-slate-900 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
@@ -203,7 +211,13 @@ function MatrixCard({ icon: Icon, title, desc, color, link }: any) {
   return link ? <Link href={link}>{CardContent}</Link> : CardContent;
 }
 
-function TechItem({ title, desc, icon: Icon }: any) {
+interface TechItemProps {
+  title: string;
+  desc: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+function TechItem({ title, desc, icon: Icon }: TechItemProps) {
   return (
     <div className="flex gap-4">
       <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center flex-shrink-0 border border-slate-700">
@@ -217,7 +231,13 @@ function TechItem({ title, desc, icon: Icon }: any) {
   );
 }
 
-function TeamCard({ name, role, desc }: any) {
+interface TeamCardProps {
+  name: string;
+  role: string;
+  desc: string;
+}
+
+function TeamCard({ name, role, desc }: TeamCardProps) {
   return (
     <div className="bg-slate-950 p-8 rounded-2xl border border-slate-800">
       <div className="w-20 h-20 bg-slate-800 rounded-full mx-auto mb-4 flex items-center justify-center">

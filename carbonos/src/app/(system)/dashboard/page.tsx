@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { ArrowDown, ArrowUp, Leaf, Zap, DollarSign, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/common/PageHeader";
+import apiClient from "@/lib/api-client";
 
 // 动态导入图表组件以避免 SSR Hydration Mismatch
 const EmissionTrendChart = dynamic(
@@ -35,15 +36,22 @@ export default function DashboardPage() {
         realtime_carbon: 0
     });
 
+    interface TrendPoint {
+        name: string;
+        value: number;
+    }
+
     // 趋势图表数据
-    const [trendData, setTrendData] = useState<any[]>([]);
+    const [trendData, setTrendData] = useState<TrendPoint[]>([]);
 
     // 获取实时数据 (每 3 秒刷新)
     useEffect(() => {
         const fetchRealtime = async () => {
             try {
-                const res = await fetch("/api/v1/simulation/realtime");
-                const data = await res.json();
+                const data = await apiClient.get<{
+                    carbon: { today_total: number; realtime_emission: number };
+                    power: { load: number; solar: number };
+                }>("/api/v1/simulation/realtime");
 
                 setSummary(prev => ({
                     ...prev,
@@ -51,11 +59,10 @@ export default function DashboardPage() {
                     current_load: data.power.load,
                     solar_power: data.power.solar,
                     realtime_carbon: data.carbon.realtime_emission,
-                    // 简单模拟费用计算
                     total_cost: Math.round(data.carbon.today_total * 45.5),
                 }));
             } catch (error) {
-                console.error("Failed to fetch realtime data", error);
+                console.error("实时数据获取失败", error);
             }
         };
 
@@ -68,18 +75,15 @@ export default function DashboardPage() {
     useEffect(() => {
         const fetchHistory = async () => {
             try {
-                const res = await fetch("/api/v1/simulation/history?days=1");
-                const data = await res.json();
-                // 转换数据格式适配 Recharts
-                const formatted = data.map((item: any) => ({
-                    name: item.time.split(" ")[1], // 取小时部分
+                const data = await apiClient.get<{ time: string; value: number }[]>("/api/v1/simulation/history?days=1");
+                const formatted: TrendPoint[] = data.map((item) => ({
+                    name: item.time.split(" ")[1],
                     value: item.value
                 }));
-                // 按小时排序
-                formatted.sort((a: any, b: any) => parseInt(a.name) - parseInt(b.name));
+                formatted.sort((a, b) => parseInt(a.name) - parseInt(b.name));
                 setTrendData(formatted);
             } catch (error) {
-                console.error("Failed to fetch history data", error);
+                console.error("历史数据获取失败", error);
             }
         };
         fetchHistory();

@@ -16,8 +16,24 @@ import {
     ReferenceLine
 } from "recharts";
 
+interface TimeSeriesPoint {
+    time: string;
+    value: number | null;
+    predict?: number | null;
+    upper?: number;
+    lower?: number;
+}
+
+interface PredictionData {
+    confidence: number;
+    saving_potential: number;
+    history: TimeSeriesPoint[];
+    prediction: TimeSeriesPoint[];
+    chartData: TimeSeriesPoint[];
+}
+
 export default function AIAnalysisPage() {
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<PredictionData | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -27,10 +43,10 @@ export default function AIAnalysisPage() {
                 const json = await res.json();
 
                 // 合并历史和预测数据，用于图表展示
-                const chartData = [
-                    ...json.history.map((i: any) => ({ ...i, predict: null })),
+                const chartData: TimeSeriesPoint[] = [
+                    ...json.history.map((i: TimeSeriesPoint) => ({ ...i, predict: null })),
                     // 预测数据的第一个点最好衔接历史数据的最后一个点，这里简化处理
-                    ...json.prediction.map((i: any) => ({ ...i, value: null, predict: i.value, upper: i.upper, lower: i.lower }))
+                    ...json.prediction.map((i: TimeSeriesPoint) => ({ ...i, value: null, predict: i.value, upper: i.upper, lower: i.lower }))
                 ];
 
                 setData({ ...json, chartData });

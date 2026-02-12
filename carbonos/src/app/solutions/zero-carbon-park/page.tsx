@@ -10,7 +10,16 @@ import { Slider } from "@/components/ui/slider";
 
 // --- Components ---
 
-function SolutionCard({ icon: Icon, title, desc, color, bg, borderColor }: any) {
+interface SolutionCardProps {
+    icon: React.ComponentType<{ className?: string }>;
+    title: string;
+    desc: string;
+    color: string;
+    bg: string;
+    borderColor: string;
+}
+
+function SolutionCard({ icon: Icon, title, desc, color, bg, borderColor }: SolutionCardProps) {
     const x = useMotionValue(0);
     const y = useMotionValue(0);
 
@@ -393,7 +402,13 @@ export default function ZeroCarbonParkPage() {
     );
 }
 
-function FeatureItem({ title, desc, icon: Icon }: any) {
+interface FeatureItemProps {
+    title: string;
+    desc: string;
+    icon: React.ComponentType<{ className?: string }>;
+}
+
+function FeatureItem({ title, desc, icon: Icon }: FeatureItemProps) {
     return (
         <div className="flex gap-4">
             <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center flex-shrink-0 border border-white/5">
@@ -407,7 +422,15 @@ function FeatureItem({ title, desc, icon: Icon }: any) {
     )
 }
 
-function StatRow({ label, value, unit, color, width }: any) {
+interface StatRowProps {
+    label: string;
+    value: string;
+    unit: string;
+    color: string;
+    width: string;
+}
+
+function StatRow({ label, value, unit, color, width }: StatRowProps) {
     return (
         <div>
             <div className="flex justify-between text-sm mb-2">

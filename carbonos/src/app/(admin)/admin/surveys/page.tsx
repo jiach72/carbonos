@@ -68,31 +68,30 @@ export default function SurveysPage() {
     const pageSize = 10;
 
     useEffect(() => {
+        const fetchSurveys = async () => {
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch('/api/v1/admin/surveys', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setSurveys(data);
+                } else {
+                    // 模拟数据用于开发
+                    setSurveys(generateMockSurveys());
+                }
+            } catch (error) {
+                console.error('获取调研数据失败:', error);
+                setSurveys(generateMockSurveys());
+            } finally {
+                setLoading(false);
+            }
+        };
         fetchSurveys();
     }, []);
-
-    const fetchSurveys = async () => {
-        try {
-            const token = localStorage.getItem('access_token');
-            const response = await fetch('/api/v1/admin/surveys', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setSurveys(data);
-            } else {
-                // 模拟数据用于开发
-                setSurveys(generateMockSurveys());
-            }
-        } catch (error) {
-            console.error('获取调研数据失败:', error);
-            setSurveys(generateMockSurveys());
-        } finally {
-            setLoading(false);
-        }
-    };
 
     // 模拟数据生成
     const generateMockSurveys = (): Survey[] => {

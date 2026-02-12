@@ -14,10 +14,31 @@ import {
     Legend
 } from "recharts";
 
+interface PCFStage {
+    name: string;
+    value: number;
+    color: string;
+}
+
+interface PCFMaterial {
+    name: string;
+    footprint: number;
+}
+
+interface PCFProduct {
+    name: string;
+    model: string;
+    status: string;
+    total_footprint: number;
+    unit: string;
+    stages?: PCFStage[];
+    materials?: PCFMaterial[];
+}
+
 export default function PCFDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const [product, setProduct] = useState<any>(null);
+    const [product, setProduct] = useState<PCFProduct | null>(null);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -74,7 +95,7 @@ export default function PCFDetailPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-6">
-                                {product.stages?.map((stage: any, idx: number) => (
+                                {product.stages?.map((stage: PCFStage, idx: number) => (
                                     <div key={idx} className="relative pl-8 pb-1 last:pb-0">
                                         {/* Timeline Line */}
                                         <div className="absolute left-3 top-2 bottom-0 w-0.5 bg-slate-800 last:hidden"></div>
@@ -125,7 +146,7 @@ export default function PCFDetailPage() {
                                             paddingAngle={5}
                                             dataKey="value"
                                         >
-                                            {product.stages?.map((entry: any, index: number) => (
+                                            {product.stages?.map((entry: PCFStage, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
@@ -142,7 +163,7 @@ export default function PCFDetailPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-3">
-                                    {product.materials?.map((mat: any, idx: number) => (
+                                    {product.materials?.map((mat: PCFMaterial, idx: number) => (
                                         <div key={idx} className="flex justify-between items-center text-sm">
                                             <span className="text-slate-300">{mat.name}</span>
                                             <div className="text-right">
